@@ -13,6 +13,11 @@
     "tauri": "tauri"
   },
   "dependencies": {
+    "@codemirror/commands": "^6.10.3",
+    "@codemirror/lang-markdown": "^6.5.0",
+    "@codemirror/language": "^6.12.3",
+    "@codemirror/state": "^6.6.0",
+    "@codemirror/view": "^6.43.0",
     "@fontsource-variable/noto-serif": "^5.2.9",
     "@hugeicons/core-free-icons": "^4.2.0",
     "@hugeicons/react": "^1.1.6",
