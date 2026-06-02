@@ -39,8 +39,8 @@
 		"exportHtml": "导出 HTML",
 		"exportPdf": "导出 PDF",
 		"statsAria": "文档统计",
-		"wordCount": "字数 {count}",
-		"charCount": "字符 {count}",
+		"wordCount": "字数 {{count}}",
+		"charCount": "字符 {{count}}",
 		"importFailed": "文件导入失败"
 	},
 	"exportDialog": {
