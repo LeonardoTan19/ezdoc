@@ -31,7 +31,7 @@ function wrapTextScopes(content: string, escapeHtml: (source: string) => string)
   return result
 }
 
-export const textFontScopePlugin: MarkdownIt.PluginWithOptions<ParserConfig> = (md, _options) => {
+export const textFontScopePlugin: MarkdownIt.PluginWithOptions<ParserConfig> = (md) => {
   const fallbackTextRenderer = md.renderer.rules.text
 
   md.renderer.rules.text = (tokens, index, options, env, self) => {

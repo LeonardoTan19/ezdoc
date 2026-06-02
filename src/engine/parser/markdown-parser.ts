@@ -72,6 +72,7 @@ export class MarkdownParser {
       console.error(`MARKDOWN_PARSE_ERROR: ${String(error)}`, error)
       throw new Error(
         `MARKDOWN_PARSE_FAILED: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        { cause: error },
       )
     }
   }
