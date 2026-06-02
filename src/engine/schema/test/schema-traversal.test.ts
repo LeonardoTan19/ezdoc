@@ -108,4 +108,12 @@ describe('schema-traversal', () => {
     expect(label?.fieldType).toBe('string')
     expect(label?.required).toBe(false)
   })
+
+  it('verifies zod internal API (_zod.def) is still available for schema introspection', () => {
+    const schema = z.string().optional()
+    const internal = schema as unknown as { _zod?: { def?: unknown } }
+    expect(internal._zod).toBeDefined()
+    expect(internal._zod?.def).toBeDefined()
+    expect((internal._zod?.def as Record<string, unknown>)?.type).toBe('optional')
+  })
 })

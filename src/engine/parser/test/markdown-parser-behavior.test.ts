@@ -4,12 +4,13 @@ import { headingStyles, pipelineMarkdown } from './fixtures'
 
 describe('MarkdownParser behavior', () => {
   it('downgrades disabled markdown syntaxes to plain paragraph content', () => {
-    const parser = new MarkdownParser({
+    const parser = new MarkdownParser(undefined, {
       headingNumbering: true,
-      disabledSyntax: ['codeBlock', 'blockquote', 'unorderedList', 'horizontalRule']
+      disabledSyntax: ['codeBlock', 'blockquote', 'unorderedList', 'horizontalRule'],
+      headingStyles
     })
 
-    const html = parser.parse(pipelineMarkdown, headingStyles)
+    const html = parser.parse(pipelineMarkdown).html
 
     expect(html).toContain('<h2>一、第二级标题</h2>')
     expect(html).toContain('<h3>（壹）第三级标题</h3>')
@@ -26,52 +27,56 @@ describe('MarkdownParser behavior', () => {
   })
 
   it('does not auto number heading when numberingStyle is empty', () => {
-    const parser = new MarkdownParser({ headingNumbering: true, disabledSyntax: [] })
+    const parser = new MarkdownParser(undefined, { headingNumbering: true, disabledSyntax: [], headingStyles: { h2: '' } })
 
-    const html = parser.parse('## 仅标题', { h2: '' })
+    const html = parser.parse('## 仅标题').html
     expect(html).toContain('<h2>仅标题</h2>')
     expect(html).not.toContain('<h2>1、仅标题</h2>')
   })
 
   it('appends index when template does not contain {number}', () => {
-    const parser = new MarkdownParser({ headingNumbering: true, disabledSyntax: [] })
+    const parser = new MarkdownParser(undefined, { headingNumbering: true, disabledSyntax: [], headingStyles: { h2: '第' } })
 
-    const html = parser.parse('## 缺占位符', { h2: '第' })
+    const html = parser.parse('## 缺占位符').html
     expect(html).toContain('<h2>第<span class="latin-text">1</span>缺占位符</h2>')
   })
 
   it('replaces all occurrences when template contains multiple {number}', () => {
-    const parser = new MarkdownParser({ headingNumbering: true, disabledSyntax: [] })
+    const parser = new MarkdownParser(undefined, { headingNumbering: true, disabledSyntax: [], headingStyles: { h2: '{number}-{number} ' } })
 
-    const html = parser.parse('## 多占位符', { h2: '{number}-{number} ' })
+    const html = parser.parse('## 多占位符').html
     expect(html).toContain('<h2><span class="latin-text">1</span>-<span class="latin-text">1</span>多占位符</h2>')
   })
 
   it('does not number when template is only whitespace', () => {
-    const parser = new MarkdownParser({ headingNumbering: true, disabledSyntax: [] })
+    const parser = new MarkdownParser(undefined, { headingNumbering: true, disabledSyntax: [], headingStyles: { h2: '   ' } })
 
-    const html = parser.parse('## 空白模板', { h2: '   ' })
+    const html = parser.parse('## 空白模板').html
     expect(html).toContain('<h2>空白模板</h2>')
     expect(html).not.toContain('1')
   })
 
   it('does not number headings when headingNumbering is false', () => {
-    const parser = new MarkdownParser({ headingNumbering: false, disabledSyntax: [] })
+    const parser = new MarkdownParser(undefined, { headingNumbering: false, disabledSyntax: [], headingStyles: { h2: '{number}、' } })
 
-    const html = parser.parse('## 禁用总开关', { h2: '{number}、' })
+    const html = parser.parse('## 禁用总开关').html
     expect(html).toContain('<h2>禁用总开关</h2>')
     expect(html).not.toContain('<h2>1、禁用总开关</h2>')
   })
 
   it('supports zhHansIndex, zhHantIndex and romanIndex placeholders', () => {
-    const parser = new MarkdownParser({ headingNumbering: true, disabledSyntax: [] })
+    const parser = new MarkdownParser(undefined, {
+      headingNumbering: true,
+      disabledSyntax: [],
+      headingStyles: {
+        h2: '{zhHansIndex}、',
+        h3: '（{zhHantIndex}）',
+        h4: '{romanIndex}.'
+      }
+    })
 
     const markdown = ['## 汉字序号', '### 大写序号', '#### 数字序号'].join('\n')
-    const html = parser.parse(markdown, {
-      h2: '{zhHansIndex}、',
-      h3: '（{zhHantIndex}）',
-      h4: '{romanIndex}.'
-    })
+    const html = parser.parse(markdown).html
 
     expect(html).toContain('<h2>一、汉字序号</h2>')
     expect(html).toContain('<h3>（壹）大写序号</h3>')
@@ -79,14 +84,18 @@ describe('MarkdownParser behavior', () => {
   })
 
   it('supports arabicIndex and explicit roman placeholders', () => {
-    const parser = new MarkdownParser({ headingNumbering: true, disabledSyntax: [] })
+    const parser = new MarkdownParser(undefined, {
+      headingNumbering: true,
+      disabledSyntax: [],
+      headingStyles: {
+        h2: '{arabicIndex}、',
+        h3: '{romanUpperIndex}.',
+        h4: '{romanLowerIndex}.'
+      }
+    })
 
     const markdown = ['## 阿拉伯', '### 罗马大写', '#### 罗马小写'].join('\n')
-    const html = parser.parse(markdown, {
-      h2: '{arabicIndex}、',
-      h3: '{romanUpperIndex}.',
-      h4: '{romanLowerIndex}.'
-    })
+    const html = parser.parse(markdown).html
 
     expect(html).toContain('<h2><span class="latin-text">1</span>、阿拉伯</h2>')
     expect(html).toContain('<h3><span class="latin-text">I</span>.罗马大写</h3>')
@@ -94,10 +103,10 @@ describe('MarkdownParser behavior', () => {
   })
 
   it('supports local style container with canonical path syntax', () => {
-    const parser = new MarkdownParser({ headingNumbering: true, disabledSyntax: [] })
+    const parser = new MarkdownParser(undefined, { headingNumbering: true, disabledSyntax: [] })
 
     const markdown = ['::: content.body.paragraph.indent: 0em', '段落A', ':::'].join('\n')
-    const html = parser.parse(markdown)
+    const html = parser.parse(markdown).html
 
     expect(html).toContain('class="local-style-container"')
     expect(html).toContain('--content-body-paragraph-indent: 0em;')
@@ -105,27 +114,27 @@ describe('MarkdownParser behavior', () => {
   })
 
   it('supports sugar path without content prefix for dynamic overrides', () => {
-    const parser = new MarkdownParser({ headingNumbering: true, disabledSyntax: [] })
+    const parser = new MarkdownParser(undefined, { headingNumbering: true, disabledSyntax: [] })
 
     const markdown = ['::: h2.style.size: 14pt', '## 标题E', ':::'].join('\n')
-    const html = parser.parse(markdown)
+    const html = parser.parse(markdown).html
 
     expect(html).toContain('class="local-style-container"')
     expect(html).toContain('--content-h2-style-size: 14pt;')
   })
 
   it('supports quoted color value for dynamic style path', () => {
-    const parser = new MarkdownParser({ headingNumbering: true, disabledSyntax: [] })
+    const parser = new MarkdownParser(undefined, { headingNumbering: true, disabledSyntax: [] })
 
     const markdown = ["::: body.style.colors.text: '#FF0000'", '段落E', ':::'].join('\n')
-    const html = parser.parse(markdown)
+    const html = parser.parse(markdown).html
 
     expect(html).toContain('class="local-style-container"')
     expect(html).toContain('--content-body-style-colors-text: #FF0000;')
   })
 
   it('supports local style container with alias syntax', () => {
-    const parser = new MarkdownParser({
+    const parser = new MarkdownParser(undefined, {
       headingNumbering: true,
       disabledSyntax: [],
       localStyleAliases: {
@@ -134,14 +143,14 @@ describe('MarkdownParser behavior', () => {
     })
 
     const markdown = ['::: bodyIndent: 1em', '段落B', ':::'].join('\n')
-    const html = parser.parse(markdown)
+    const html = parser.parse(markdown).html
 
     expect(html).toContain('class="local-style-container"')
     expect(html).toContain('--content-body-paragraph-indent: 1em;')
   })
 
   it('supports alias syntax with full-width colon and multi-rule descriptors', () => {
-    const parser = new MarkdownParser({
+    const parser = new MarkdownParser(undefined, {
       headingNumbering: false,
       disabledSyntax: [],
       localStyleAliases: {
@@ -155,7 +164,7 @@ describe('MarkdownParser behavior', () => {
       '别名规则段落',
       ':::'
     ].join('\n')
-    const html = parser.parse(markdown)
+    const html = parser.parse(markdown).html
 
     expect(html).toContain('class="local-style-container"')
     expect(html).toContain('--content-body-paragraph-indent: 0em;')
@@ -163,10 +172,10 @@ describe('MarkdownParser behavior', () => {
   })
 
   it('does not support built-in old aliases without parser alias config', () => {
-    const parser = new MarkdownParser({ headingNumbering: true, disabledSyntax: [] })
+    const parser = new MarkdownParser(undefined, { headingNumbering: true, disabledSyntax: [] })
 
     const markdown = ['::: bodyIndent: 0em', '段落C', ':::'].join('\n')
-    const html = parser.parse(markdown)
+    const html = parser.parse(markdown).html
 
     expect(html).not.toContain('class="local-style-container"')
     expect(html).toContain('<span class="latin-text">bodyIndent</span>: <span class="latin-text">0em</span>')
@@ -174,10 +183,10 @@ describe('MarkdownParser behavior', () => {
   })
 
   it('supports full-width colon in local style descriptor', () => {
-    const parser = new MarkdownParser({ headingNumbering: true, disabledSyntax: [] })
+    const parser = new MarkdownParser(undefined, { headingNumbering: true, disabledSyntax: [] })
 
     const markdown = ['::: content.body.paragraph.indent： 0em', '段落D', ':::'].join('\n')
-    const html = parser.parse(markdown)
+    const html = parser.parse(markdown).html
 
     expect(html).toContain('class="local-style-container"')
     expect(html).toContain('--content-body-paragraph-indent: 0em;')
@@ -185,9 +194,9 @@ describe('MarkdownParser behavior', () => {
   })
 
   it('wraps latin letters and chinese quote symbols with dedicated spans', () => {
-    const parser = new MarkdownParser({ headingNumbering: false, disabledSyntax: [] })
+    const parser = new MarkdownParser(undefined, { headingNumbering: false, disabledSyntax: [] })
 
-    const html = parser.parse('ABC“测试”《公文》')
+    const html = parser.parse('ABC“测试”《公文》').html
 
     expect(html).toContain('<span class="latin-text">ABC</span>')
     expect(html).toContain('<span class="cn-quote">“</span>')
@@ -196,7 +205,7 @@ describe('MarkdownParser behavior', () => {
     expect(html).toContain('<span class="cn-book-title">》</span>')
   })
   it('supports nested local style containers with proximity priority', () => {
-    const parser = new MarkdownParser({ headingNumbering: false, disabledSyntax: [] })
+    const parser = new MarkdownParser(undefined, { headingNumbering: false, disabledSyntax: [] })
 
     const markdown = [
       '::: body.paragraph.indent:2em',
@@ -207,7 +216,7 @@ describe('MarkdownParser behavior', () => {
       '外层段落2',
       ':::'
     ].join('\n')
-    const html = parser.parse(markdown)
+    const html = parser.parse(markdown).html
 
     const outerDivIndex = html.indexOf('class="local-style-container"')
     const innerDivIndex = html.indexOf('class="local-style-container"', outerDivIndex + 1)
@@ -222,7 +231,7 @@ describe('MarkdownParser behavior', () => {
   })
 
   it('supports three-level nesting of local style containers', () => {
-    const parser = new MarkdownParser({ headingNumbering: false, disabledSyntax: [] })
+    const parser = new MarkdownParser(undefined, { headingNumbering: false, disabledSyntax: [] })
 
     const markdown = [
       '::: body.paragraph.indent:3em',
@@ -235,7 +244,7 @@ describe('MarkdownParser behavior', () => {
       ':::',
       ':::'
     ].join('\n')
-    const html = parser.parse(markdown)
+    const html = parser.parse(markdown).html
 
     const matches = html.match(/class="local-style-container"/g)
     expect(matches).toHaveLength(3)
@@ -245,14 +254,14 @@ describe('MarkdownParser behavior', () => {
   })
 
   it('supports single ::: line with multiple semicolon-separated rules', () => {
-    const parser = new MarkdownParser({ headingNumbering: false, disabledSyntax: [] })
+    const parser = new MarkdownParser(undefined, { headingNumbering: false, disabledSyntax: [] })
 
     const markdown = [
       "::: body.paragraph.indent:0em; body.style.colors.text:'#ff0000'",
       '多规则段落',
       ':::'
     ].join('\n')
-    const html = parser.parse(markdown)
+    const html = parser.parse(markdown).html
 
     expect(html).toContain('class="local-style-container"')
     expect(html).toContain('--content-body-paragraph-indent: 0em;')
@@ -260,35 +269,35 @@ describe('MarkdownParser behavior', () => {
   })
 
   it('supports full-width semicolon as multi-rule separator', () => {
-    const parser = new MarkdownParser({ headingNumbering: false, disabledSyntax: [] })
+    const parser = new MarkdownParser(undefined, { headingNumbering: false, disabledSyntax: [] })
 
     const markdown = [
       '::: body.paragraph.indent:0em；body.paragraph.align:right',
       '全角分号段落',
       ':::'
     ].join('\n')
-    const html = parser.parse(markdown)
+    const html = parser.parse(markdown).html
 
     expect(html).toContain('--content-body-paragraph-indent: 0em;')
     expect(html).toContain('--content-body-paragraph-align: right;')
   })
 
   it('ignores invalid segments in multi-rule descriptor', () => {
-    const parser = new MarkdownParser({ headingNumbering: false, disabledSyntax: [] })
+    const parser = new MarkdownParser(undefined, { headingNumbering: false, disabledSyntax: [] })
 
     const markdown = [
       '::: body.paragraph.indent:0em; invalidKey; body.paragraph.align:center',
       '部分无效段落',
       ':::'
     ].join('\n')
-    const html = parser.parse(markdown)
+    const html = parser.parse(markdown).html
 
     expect(html).toContain('--content-body-paragraph-indent: 0em;')
     expect(html).toContain('--content-body-paragraph-align: center;')
   })
 
   it('handles unclosed nested container gracefully', () => {
-    const parser = new MarkdownParser({ headingNumbering: false, disabledSyntax: [] })
+    const parser = new MarkdownParser(undefined, { headingNumbering: false, disabledSyntax: [] })
 
     const markdown = [
       '::: body.paragraph.indent:2em',
@@ -297,7 +306,7 @@ describe('MarkdownParser behavior', () => {
       '内层未关闭',
       ':::'
     ].join('\n')
-    const html = parser.parse(markdown)
+    const html = parser.parse(markdown).html
 
     const matches = html.match(/class="local-style-container"/g)
     expect(matches).toHaveLength(1)
@@ -306,48 +315,56 @@ describe('MarkdownParser behavior', () => {
   })
 
   it('treats single Enter as new paragraph when enterStyle is paragraph', () => {
-    const parser = new MarkdownParser({ headingNumbering: false, disabledSyntax: [], enterStyle: 'paragraph' })
+    const parser = new MarkdownParser(undefined, { headingNumbering: false, disabledSyntax: [], enterStyle: 'paragraph' })
 
-    const html = parser.parse(['第一行', '第二行'].join('\n'))
+    const html = parser.parse(['第一行', '第二行'].join('\n')).html
 
     expect(html).toContain('<p>第一行</p>')
     expect(html).toContain('<p>第二行</p>')
   })
 
   it('treats line-end // plus Enter as manual line break when enterStyle is paragraph', () => {
-    const parser = new MarkdownParser({ headingNumbering: false, disabledSyntax: [], enterStyle: 'paragraph' })
+    const parser = new MarkdownParser(undefined, { headingNumbering: false, disabledSyntax: [], enterStyle: 'paragraph' })
 
-    const html = parser.parse(['第一行//', '第二行'].join('\n'))
+    const html = parser.parse(['第一行//', '第二行'].join('\n')).html
 
     expect(html).toMatch(/<p>第一行<br>\s*第二行<\/p>/)
   })
 
   it('keeps heading structure when single Enter follows heading under enterStyle paragraph', () => {
-    const parser = new MarkdownParser({ headingNumbering: false, disabledSyntax: [], enterStyle: 'paragraph' })
+    const parser = new MarkdownParser(undefined, { headingNumbering: false, disabledSyntax: [], enterStyle: 'paragraph' })
 
-    const html = parser.parse(['## 标题', '正文'].join('\n'))
+    const html = parser.parse(['## 标题', '正文'].join('\n')).html
 
     expect(html).toContain('<h2>标题</h2>')
     expect(html).toContain('<p>正文</p>')
   })
 
   it('supports manual // line break inside local style container under enterStyle paragraph', () => {
-    const parser = new MarkdownParser({ headingNumbering: false, disabledSyntax: [], enterStyle: 'paragraph' })
+    const parser = new MarkdownParser(undefined, { headingNumbering: false, disabledSyntax: [], enterStyle: 'paragraph' })
 
     const markdown = ['::: body.paragraph.indent:0em', '容器第一行//', '容器第二行', ':::'].join('\n')
-    const html = parser.parse(markdown)
+    const html = parser.parse(markdown).html
 
     expect(html).toContain('class="local-style-container"')
     expect(html).toMatch(/<p>容器第一行<br>\s*容器第二行<\/p>/)
   })
 
   it('keeps explicit empty lines as visible blank paragraphs under enterStyle paragraph', () => {
-    const parser = new MarkdownParser({ headingNumbering: false, disabledSyntax: [], enterStyle: 'paragraph' })
+    const parser = new MarkdownParser(undefined, { headingNumbering: false, disabledSyntax: [], enterStyle: 'paragraph' })
 
-    const html = parser.parse(['第一段', '', '第二段'].join('\n'))
+    const html = parser.parse(['第一段', '', '第二段'].join('\n')).html
 
     expect(html).toContain('<p>第一段</p>')
-    expect(html).toContain('<p>\u00A0</p>')
+    expect(html).toContain('<p> </p>')
     expect(html).toContain('<p>第二段</p>')
+  })
+
+  it('returns ParseResult with html and tokens', () => {
+    const parser = new MarkdownParser(undefined, { headingNumbering: false, disabledSyntax: [] })
+    const result = parser.parse('# Test')
+    expect(result.html).toContain('<h1><span class="latin-text">Test</span></h1>')
+    expect(Array.isArray(result.tokens)).toBe(true)
+    expect(result.tokens.length).toBeGreaterThan(0)
   })
 })

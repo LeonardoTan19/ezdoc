@@ -21,6 +21,32 @@ const PAGINATION_NUMBER_STYLE_SET = new Set(['arabic', 'roman', 'zhHans', 'zhHan
 
 type AnyRecord = Record<string, unknown>
 
+type Validator = (value: unknown, path: string, issues: ValidationIssue[]) => void
+
+function patternValidator(pattern: RegExp, code: ErrorCode): Validator {
+  return (value, path, issues) => {
+    if (typeof value !== 'string' || !pattern.test(value.trim())) {
+      pushError(issues, path, code)
+    }
+  }
+}
+
+function setValidator(validSet: Set<string | number>, code: ErrorCode): Validator {
+  return (value, path, issues) => {
+    if (!validSet.has(value as never)) {
+      pushError(issues, path, code)
+    }
+  }
+}
+
+function typeValidator(expectedType: string, code: ErrorCode): Validator {
+  return (value, path, issues) => {
+    if (typeof value !== expectedType) {
+      pushError(issues, path, code)
+    }
+  }
+}
+
 export function validateRule(ruleConfig: unknown): ValidationResult {
   const issues: ValidationIssue[] = []
 
@@ -94,13 +120,21 @@ function validateCssLength(value: unknown, path: string, issues: ValidationIssue
   }
 }
 
-function validateCssLineHeight(value: unknown, path: string, issues: ValidationIssue[]): void {
-  if (typeof value !== 'string' || !CSS_LINE_HEIGHT_PATTERN.test(value.trim())) {
-    pushError(issues, path, ValidationErrorCode.CSS_LINE_HEIGHT)
-  }
-}
+const validateCssLineHeight = patternValidator(CSS_LINE_HEIGHT_PATTERN, ValidationErrorCode.CSS_LINE_HEIGHT)
 
-function validateCssParagraphSpacing(value: unknown, path: string, issues: ValidationIssue[]): void {
+const validateCssColor = patternValidator(CSS_COLOR_PATTERN, ValidationErrorCode.CSS_COLOR)
+
+const validateFontWeight = setValidator(FONT_WEIGHT_SET, ValidationErrorCode.FONT_WEIGHT)
+
+const validateTextAlign = setValidator(ALIGN_SET, ValidationErrorCode.TEXT_ALIGN)
+
+const validateBoolean = typeValidator('boolean', ValidationErrorCode.BOOLEAN)
+
+const validateEnterStyle = setValidator(ENTER_STYLE_SET, ValidationErrorCode.ENTER_STYLE)
+
+// Kept custom: '' and numeric-0 are accepted as valid spacing values, which a
+// plain patternValidator would reject.
+const validateCssParagraphSpacing: Validator = (value, path, issues) => {
   if (value === '') {
     return
   }
@@ -111,36 +145,6 @@ function validateCssParagraphSpacing(value: unknown, path: string, issues: Valid
 
   if (typeof value !== 'string' || !CSS_PARAGRAPH_SPACING_PATTERN.test(value.trim())) {
     pushError(issues, path, ValidationErrorCode.CSS_PARAGRAPH_SPACING)
-  }
-}
-
-function validateCssColor(value: unknown, path: string, issues: ValidationIssue[]): void {
-  if (typeof value !== 'string' || !CSS_COLOR_PATTERN.test(value.trim())) {
-    pushError(issues, path, ValidationErrorCode.CSS_COLOR)
-  }
-}
-
-function validateFontWeight(value: unknown, path: string, issues: ValidationIssue[]): void {
-  if (typeof value !== 'number' || !FONT_WEIGHT_SET.has(value)) {
-    pushError(issues, path, ValidationErrorCode.FONT_WEIGHT)
-  }
-}
-
-function validateTextAlign(value: unknown, path: string, issues: ValidationIssue[]): void {
-  if (typeof value !== 'string' || !ALIGN_SET.has(value)) {
-    pushError(issues, path, ValidationErrorCode.TEXT_ALIGN)
-  }
-}
-
-function validateBoolean(value: unknown, path: string, issues: ValidationIssue[]): void {
-  if (typeof value !== 'boolean') {
-    pushError(issues, path, ValidationErrorCode.BOOLEAN)
-  }
-}
-
-function validateEnterStyle(value: unknown, path: string, issues: ValidationIssue[]): void {
-  if (typeof value !== 'string' || !ENTER_STYLE_SET.has(value)) {
-    pushError(issues, path, ValidationErrorCode.ENTER_STYLE)
   }
 }
 

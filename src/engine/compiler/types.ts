@@ -78,3 +78,14 @@ export interface CompiledRule {
   rules: StyleNode[]
   cssText: string
 }
+
+export interface HostSelectors {
+  rootContent: string[]
+  paperSheet: string[]
+  exportDocument: string[]
+  appShell: string[]
+  printContainer: string[]
+  // Compound/intersection selector (sheet AND content, e.g. '.paper-sheet.preview-content');
+  // cannot be composed from paperSheet + printContainer, so it is injected whole.
+  paperContent: string[]
+}

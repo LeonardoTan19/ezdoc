@@ -12,5 +12,6 @@ export const ParserConfigSchema = z.object({
     .record(z.string().min(1), LocalStyleTargetPathSchema)
     .optional()
     .default({}),
+  headingStyles: z.record(z.string(), z.string()).optional(),
 })
 export type ParserConfig = z.infer<typeof ParserConfigSchema>

@@ -30,11 +30,31 @@ export interface SchemaFieldDescriptor {
   catchallDescriptor?: SchemaFieldDescriptor
 }
 
+/**
+ * ZOD INTERNAL API — isolated access point for Zod's internal type descriptor.
+ *
+ * WARNING: This uses `_zod.def` which is NOT part of Zod's public API.
+ * It works in zod 4.3.6. If a Zod upgrade breaks this, see the
+ * version-pin test in schema-traversal.test.ts for the expected failure.
+ *
+ * A public-API alternative does not currently exist: `z.toJSONSchema()`
+ * loses schema identity (e.g. CssLengthSchema vs. CssColorSchema),
+ * which breaks the KNOWN_LEAF_SCHEMAS identity-based type resolution.
+ */
 type ZodDef = { type: string; [k: string]: unknown }
 type ZodInternal = { _zod: { def: ZodDef; values?: Iterable<unknown> } }
 
 function getDef(schema: z.ZodTypeAny): ZodDef {
-  return (schema as unknown as ZodInternal)._zod.def
+  const internal = schema as unknown as ZodInternal
+  const def = internal._zod?.def
+  if (!def) {
+    throw new Error(
+      `Zod internal API (_zod.def) is no longer available. ` +
+        `The schema-traversal module must be updated for the current zod version. ` +
+        `See schema-traversal.test.ts for the version-pin test.`
+    )
+  }
+  return def
 }
 
 const KNOWN_LEAF_SCHEMAS = new Map<z.ZodTypeAny, SchemaFieldType>([

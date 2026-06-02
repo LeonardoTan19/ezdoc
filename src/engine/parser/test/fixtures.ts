@@ -1,5 +1,3 @@
-import type { HeadingLevel } from '../../compiler/types'
-
 export const pipelineMarkdown = `## 第二级标题
 ### 第三级标题
 
@@ -12,7 +10,7 @@ const value = 1
 
 ---`
 
-export const headingStyles: Partial<Record<HeadingLevel, string | undefined>> = {
+export const headingStyles: Record<string, string> = {
   h2: '{zhHansIndex}、',
   h3: '（{zhHantIndex}）'
 }

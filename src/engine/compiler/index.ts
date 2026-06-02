@@ -1,6 +1,6 @@
 export { compileRule } from './compiler'
 export { validateRule } from './validator'
-export { RuleEngine, ruleEngine } from './rule-engine'
+export { DEFAULT_HOST } from './default-host'
 export { scopeSelectors } from './css-scope'
 export { toCssCustomProperty } from './css-variable'
-export type { CompiledRule, ValidationResult, ValidationIssue, ValidationErrorCode } from './types'
+export type { CompiledRule, ValidationResult, ValidationIssue, ValidationErrorCode, HostSelectors } from './types'

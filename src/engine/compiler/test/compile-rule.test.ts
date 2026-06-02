@@ -1,11 +1,14 @@
 import { describe, expect, it } from 'vitest'
-import { ruleEngine } from '../rule-engine'
+import { compileRule } from '../compiler'
+import { DEFAULT_HOST } from '../default-host'
+import { getBuiltinRules } from '../../builtin-rules'
+import type { HostSelectors } from '../types'
 import { createValidRule } from './fixtures'
 
-describe('RuleEngine', () => {
+describe('compileRule', () => {
   it('compiles valid rule into tokens/rules/cssText', () => {
     const validRule = createValidRule()
-    const compiled = ruleEngine.compile(validRule)
+    const compiled = compileRule(validRule, DEFAULT_HOST)
     const expectedPageMargin = `${validRule.page.margins.top} ${validRule.page.margins.right} ${validRule.page.margins.bottom} ${validRule.page.margins.left}`
 
     expect(Object.keys(compiled.tokens).length).toBeGreaterThan(10)
@@ -29,15 +32,8 @@ describe('RuleEngine', () => {
     expect(compiled.cssText).toContain('break-inside: auto;')
   })
 
-  it('throws meaningful error when compile receives invalid rule', () => {
-    const invalidRule = createValidRule()
-    invalidRule.page.margins.top = '2em' as '37mm'
-
-    expect(() => ruleEngine.compile(invalidRule)).toThrowError(/page\.margins\.top: CONVERTIBLE_CSS_LENGTH/)
-  })
-
   it('provides builtin rules from yaml source', () => {
-    const rules = ruleEngine.getBuiltinRules()
+    const rules = getBuiltinRules()
     expect(rules.length).toBeGreaterThan(1)
     expect(rules[0]?.name).toContain('GB/T 33476-2016')
     expect(rules.some((rule) => rule.name.includes('GB/T 9704-2012'))).toBe(true)
@@ -45,16 +41,32 @@ describe('RuleEngine', () => {
 
   it('generates tokens for custom content level without adding new style rules', () => {
     const baseRule = createValidRule()
-    const baseCompiled = ruleEngine.compile(baseRule)
+    const baseCompiled = compileRule(baseRule, DEFAULT_HOST)
 
     const customRule = createValidRule()
     const appendix = JSON.parse(JSON.stringify(customRule.content.body))
     appendix.paragraph.indent = '3em'
     customRule.content.appendix = appendix
 
-    const compiled = ruleEngine.compile(customRule)
+    const compiled = compileRule(customRule, DEFAULT_HOST)
     expect(compiled.tokens['--content-appendix-paragraph-indent']).toBe('3em')
     expect(compiled.cssText).toContain('--content-appendix-paragraph-indent: 3em;')
     expect(compiled.rules).toHaveLength(baseCompiled.rules.length)
+  })
+
+  it('uses injected custom host selectors instead of defaults', () => {
+    const customHost: HostSelectors = {
+      rootContent: ['.custom-preview', '.custom-export'],
+      paperSheet: ['.custom-sheet'],
+      exportDocument: ['.custom-export'],
+      appShell: ['#custom-app'],
+      printContainer: ['.custom-print'],
+      paperContent: ['.custom-sheet.custom-preview', '.custom-export'],
+    }
+    const compiled = compileRule(createValidRule(), customHost)
+
+    expect(compiled.cssText).toContain('.custom-preview .latin-text')
+    expect(compiled.cssText).toContain('.custom-export .latin-text')
+    expect(compiled.cssText).not.toContain('.preview-content')
   })
 })
