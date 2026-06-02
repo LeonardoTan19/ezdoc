@@ -6,12 +6,12 @@ import type { CodeMirrorHandle } from './CodeMirrorReact'
 
 interface ToolbarProps {
   editorRef: React.RefObject<CodeMirrorHandle | null>
-  onHistoryChange?: (canUndo: boolean, canRedo: boolean) => void
 }
 
 export function Toolbar({ editorRef }: ToolbarProps) {
   const { t } = useTranslation()
-  const docStore = useDocStore()
+  const wordCount = useDocStore((state) => state.getWordCount())
+  const charCount = useDocStore((state) => state.getCharCount())
   const { importFile, exportMarkdown, exportHtml } = useFileSystem()
 
   const handleImport = async () => {
@@ -36,6 +36,7 @@ export function Toolbar({ editorRef }: ToolbarProps) {
         variant="ghost"
         size="sm"
         title={t('toolbar.undoTitle')}
+        aria-label={t('toolbar.undoTitle')}
         onClick={() => editorRef.current?.undo()}
       >
         ↶
@@ -44,6 +45,7 @@ export function Toolbar({ editorRef }: ToolbarProps) {
         variant="ghost"
         size="sm"
         title={t('toolbar.redoTitle')}
+        aria-label={t('toolbar.redoTitle')}
         onClick={() => editorRef.current?.redo()}
       >
         ↷
@@ -64,9 +66,9 @@ export function Toolbar({ editorRef }: ToolbarProps) {
       </Button>
 
       <div className="ml-auto text-xs text-muted-foreground">
-        {t('toolbar.wordCount', { count: docStore.getWordCount() })}
+        {t('toolbar.wordCount', { count: wordCount })}
         {' · '}
-        {t('toolbar.charCount', { count: docStore.getCharCount() })}
+        {t('toolbar.charCount', { count: charCount })}
       </div>
     </div>
   )
