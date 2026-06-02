@@ -19,6 +19,12 @@ const CodeMirrorReact = forwardRef<CodeMirrorHandle, CodeMirrorReactProps>(
   function CodeMirrorReact({ value, onChange }, ref) {
     const containerRef = useRef<HTMLDivElement>(null)
     const viewRef = useRef<EditorView | null>(null)
+    const onChangeRef = useRef(onChange)
+
+    // Keep onChange ref in sync to avoid stale closures
+    useEffect(() => {
+      onChangeRef.current = onChange
+    }, [onChange])
 
     useImperativeHandle(ref, () => ({
       undo: () => {
@@ -44,7 +50,7 @@ const CodeMirrorReact = forwardRef<CodeMirrorHandle, CodeMirrorReactProps>(
       const state = createEditorState({
         content: value,
         onChange: (newValue: string) => {
-          onChange(newValue)
+          onChangeRef.current(newValue)
         },
       })
       const view = new EditorView({

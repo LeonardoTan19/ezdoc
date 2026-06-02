@@ -39,7 +39,6 @@ export function createEditorState(options: CreateEditorStateOptions): EditorStat
     lineNumbers(),
     lineNumberDigitsPlugin,
     markdown(),
-    EditorView.theme({}),
     EditorView.updateListener.of((update) => {
       if (!update.docChanged) return
       options.onChange(update.state.doc.toString())
