@@ -3,8 +3,11 @@ import { useDocStore } from '@/stores/doc-store'
 import { useRuleStore } from '@/stores/rule-store'
 
 export function useFileSystem() {
-  const docStore = useDocStore()
-  const ruleStore = useRuleStore()
+  const setContent = useDocStore((s) => s.setContent)
+  const content = useDocStore((s) => s.content)
+  const title = useDocStore((s) => s.title)
+  const html = useDocStore((s) => s.html)
+  const getRuleCssText = useRuleStore((s) => s.getRuleCssText)
 
   const importFile = useCallback(
     async (file: File): Promise<string> => {
@@ -21,19 +24,19 @@ export function useFileSystem() {
         reader.onerror = () => reject(new Error('File read error'))
         reader.readAsText(file, 'UTF-8')
       })
-      docStore.setContent(content)
+      setContent(content)
       return content
     },
-    [docStore],
+    [setContent],
   )
 
   const exportMarkdown = useCallback(
     (filename = 'document.md') => {
       const finalName = filename.endsWith('.md') ? filename : `${filename}.md`
-      const blob = new Blob([docStore.content], { type: 'text/markdown;charset=utf-8' })
+      const blob = new Blob([content], { type: 'text/markdown;charset=utf-8' })
       downloadBlob(blob, finalName)
     },
-    [docStore.content],
+    [content],
   )
 
   const exportHtml = useCallback(
@@ -43,21 +46,21 @@ export function useFileSystem() {
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
-  <title>${docStore.title || 'Document'}</title>
+  <title>${title || 'Document'}</title>
   <style>
-${ruleStore.getRuleCssText()}
+${getRuleCssText()}
   </style>
 </head>
 <body>
   <article class="export-document">
-${docStore.html}
+${html}
   </article>
 </body>
 </html>`
       const blob = new Blob([fullHtml], { type: 'text/html;charset=utf-8' })
       downloadBlob(blob, finalName)
     },
-    [docStore.html, docStore.title, ruleStore],
+    [html, title, getRuleCssText],
   )
 
   const setupDropZone = useCallback(

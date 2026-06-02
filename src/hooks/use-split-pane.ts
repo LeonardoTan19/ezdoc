@@ -68,6 +68,11 @@ export function useSplitPane(options: UseSplitPaneOptions = {}) {
       window.removeEventListener('pointermove', onMove)
       window.removeEventListener('pointerup', onStop)
       window.removeEventListener('pointercancel', onStop)
+      if (isResizing.current) {
+        isResizing.current = false
+        document.body.style.cursor = ''
+        document.body.style.userSelect = ''
+      }
     }
   }, [updateByClientX])
 

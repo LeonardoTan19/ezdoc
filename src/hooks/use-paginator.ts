@@ -264,22 +264,25 @@ export function usePaginator(options: UsePaginatorOptions = {}) {
       measure.style.overflow = 'hidden'
       measure.style.height = `${pageHeight}px`
 
-      const blocks = collectBlocks(html, {
-        styleWrapperTagNames: resolved.styleWrapperTagNames,
-        localStyleContainerClassName: resolved.localStyleContainerClassName,
-      })
-      if (blocks.length === 0) {
-        setPages([''])
-        setPageMetas([])
-        return
-      }
+      try {
+        const blocks = collectBlocks(html, {
+          styleWrapperTagNames: resolved.styleWrapperTagNames,
+          localStyleContainerClassName: resolved.localStyleContainerClassName,
+        })
+        if (blocks.length === 0) {
+          setPages([''])
+          setPageMetas([])
+          return
+        }
 
-      const paginated = paginateBlocks(blocks, measure, resolved)
-      const metas = buildPageMetas(paginated.length, ruleStore.currentRule?.pagination)
-      setPages(paginated.length > 0 ? paginated : [''])
-      setPageMetas(metas)
-      setCurrentPage((prev) => Math.min(prev, paginated.length))
-      measure.innerHTML = ''
+        const paginated = paginateBlocks(blocks, measure, resolved)
+        const metas = buildPageMetas(paginated.length, ruleStore.currentRule?.pagination)
+        setPages(paginated.length > 0 ? paginated : [''])
+        setPageMetas(metas)
+        setCurrentPage((prev) => Math.max(1, Math.min(prev, paginated.length || 1)))
+      } finally {
+        measure.innerHTML = ''
+      }
     },
     [getPageHeight, resolved, ruleStore.currentRule],
   )

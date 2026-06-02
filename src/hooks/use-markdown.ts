@@ -5,7 +5,8 @@ import { useDocStore } from '@/stores/doc-store'
 import { useRuleStore } from '@/stores/rule-store'
 
 export function useMarkdown() {
-  const parserRef = useRef(new MarkdownParser())
+  const parserRef = useRef<MarkdownParser | null>(null)
+  if (parserRef.current === null) parserRef.current = new MarkdownParser()
   const docStore = useDocStore()
   const ruleStore = useRuleStore()
   const parserConfig = ruleStore.currentRule?.parser
@@ -18,16 +19,16 @@ export function useMarkdown() {
       // how markdown renders. Push it into the parser before each parse so
       // heading numbering threads through correctly.
       if (parserConfig) {
-        parserRef.current.setOptions(parserConfig)
+        parserRef.current!.setOptions(parserConfig)
       }
-      const result = parserRef.current.parse(markdown)
+      const result = parserRef.current!.parse(markdown)
       return result.html
     },
     [parserConfig],
   )
 
   const setOptions = useCallback((options: Partial<ParserConfig>) => {
-    parserRef.current.setOptions(options)
+    parserRef.current!.setOptions(options)
   }, [])
 
   useEffect(() => {
