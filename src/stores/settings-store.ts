@@ -40,13 +40,16 @@ const DEFAULT_PREVIEW: PreviewSettings = {
   zoom: 100,
 }
 
+const DEFAULT_AUTO_SAVE = true
+const DEFAULT_AUTO_SAVE_INTERVAL = 30000
+
 export const useSettingsStore = create<SettingsState>()(
   persist(
     (set) => ({
       editorSettings: { ...DEFAULT_EDITOR },
       previewSettings: { ...DEFAULT_PREVIEW },
-      autoSave: true,
-      autoSaveInterval: 30000,
+      autoSave: DEFAULT_AUTO_SAVE,
+      autoSaveInterval: DEFAULT_AUTO_SAVE_INTERVAL,
 
       updateEditorSettings(settings) {
         set((s) => ({ editorSettings: { ...s.editorSettings, ...settings } }))
@@ -66,7 +69,7 @@ export const useSettingsStore = create<SettingsState>()(
       },
 
       resetSettings() {
-        set({ editorSettings: { ...DEFAULT_EDITOR }, previewSettings: { ...DEFAULT_PREVIEW }, autoSave: true, autoSaveInterval: 30000 })
+        set({ editorSettings: { ...DEFAULT_EDITOR }, previewSettings: { ...DEFAULT_PREVIEW }, autoSave: DEFAULT_AUTO_SAVE, autoSaveInterval: DEFAULT_AUTO_SAVE_INTERVAL })
       },
     }),
     { name: SETTINGS_STORAGE_KEY },

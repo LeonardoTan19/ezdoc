@@ -3,6 +3,7 @@ import { persist } from 'zustand/middleware'
 import type { RuleConfig } from '@/engine'
 import { compileRule, validateRule, getBuiltinRules, DEFAULT_HOST } from '@/engine'
 import type { CompiledRule, ValidationResult, HostSelectors } from '@/engine'
+import { RuleConfigSchema } from '@/engine/schema'
 import { sanitizeCssValue } from '@/engine/utils/css-sanitize-utils'
 
 const RULE_STORAGE_KEY = 'ezdoc-rule'
@@ -65,7 +66,9 @@ export const useRuleStore = create<RuleState>()(
         if (!validation.valid) {
           throw new Error(`Invalid rule: ${validation.errors.join(', ')}`)
         }
-        // Persist happens via zustand middleware
+        // Persistence only fires when `set` is called below, which happens
+        // solely for the current rule. Saving a non-current rule validates
+        // but does NOT persist.
         const current = get().currentRule
         if (current && current.name === rule.name) {
           const compiled = compileRule(rule, get().host)
@@ -96,7 +99,16 @@ export const useRuleStore = create<RuleState>()(
 
         const saved = get().currentRule
         if (saved) {
-          // already hydrated by zustand persist
+          // Zustand persist rehydrates from localStorage with no schema
+          // validation, so re-validate before use and fall back to a builtin
+          // rule if the persisted value is corrupted or stale.
+          const parsed = RuleConfigSchema.safeParse(saved)
+          if (!parsed.success) {
+            if (builtin.length > 0) {
+              get().loadRule(builtin[0]!)
+            }
+            return
+          }
           const builtinMatch = builtin.find((r) => r.name === saved.name)
           if (builtinMatch && JSON.stringify(saved) !== JSON.stringify(builtinMatch)) {
             get().loadRule(builtinMatch)
