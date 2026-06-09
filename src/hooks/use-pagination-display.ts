@@ -53,10 +53,14 @@ export function getPaginationInlineStyle(
     color: cfg.style.colors.text,
   }
   const { vertical, horizontal } = cfg.position
+  // The vertical offset is measured from the content-area (版心) edge,
+  // positive pointing downward (toward the bottom of the paper).
   if (vertical.anchor === 'top') {
-    style.top = clampToMargin(vertical.offset, '--page-margins-top')
+    // 0 sits at the content top edge; growing offset moves down into the page.
+    style.top = `calc(var(--page-margins-top) + ${vertical.offset})`
   } else {
-    style.bottom = clampToMargin(vertical.offset, '--page-margins-bottom')
+    // 0 sits at the content bottom edge; growing offset moves down into the margin.
+    style.bottom = `calc(var(--page-margins-bottom) - ${vertical.offset})`
   }
   if (horizontal.anchor === 'center') {
     style.left = `calc(50% + ${horizontal.offset})`

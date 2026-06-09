@@ -219,6 +219,14 @@ export function getPageContentHeightPx(page: RuleConfig['page']): number {
   return baseUnitsToPx(pageHeightBaseUnits - topBaseUnits - bottomBaseUnits)
 }
 
+export function getPageContentWidthPx(page: RuleConfig['page']): number {
+  const dimensions = resolvePageDimensions(page.size, page.orientation, page.dimensions)
+  const pageWidthBaseUnits = cssLengthToBaseUnits(dimensions.width as CssLength)
+  const leftBaseUnits = cssLengthToBaseUnits(page.margins.left)
+  const rightBaseUnits = cssLengthToBaseUnits(page.margins.right)
+  return baseUnitsToPx(pageWidthBaseUnits - leftBaseUnits - rightBaseUnits)
+}
+
 export function resolvePdfPageFormatMm(page: RuleConfig['page'] | undefined): {
   orientation: PageOrientation
   width: number

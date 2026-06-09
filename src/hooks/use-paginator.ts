@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback, useMemo } from 'react'
 import type { PaginationConfig } from '@/engine/schema'
-import { getPageContentHeightPx } from '@/engine/utils/page-metrics-utils'
+import { getPageContentHeightPx, getPageContentWidthPx } from '@/engine/utils/page-metrics-utils'
 import {
   collectBlocks,
   DEFAULT_LOCAL_STYLE_CONTAINER_CLASS_NAME,
@@ -55,8 +55,8 @@ function isOverflowing(el: HTMLElement, tolerance: number): boolean {
   return contentBottom - containerRect.bottom > tolerance
 }
 
-function canFitInEmptyPage(html: string, measure: HTMLElement, tolerance: number): boolean {
-  measure.innerHTML = html
+function canFit(html: string, measure: HTMLElement, tolerance: number, prefixHtml = ''): boolean {
+  measure.innerHTML = `${prefixHtml}${html}`
   return !isOverflowing(measure, tolerance)
 }
 
@@ -82,6 +82,7 @@ function trySplitElementByChildNodes(
   element: Element,
   measure: HTMLElement,
   tolerance: number,
+  prefixHtml = '',
 ): { fittingHtml: string; remainingHtml: string } | null {
   const childNodes = Array.from(element.childNodes)
   if (childNodes.length < 2) return null
@@ -91,7 +92,7 @@ function trySplitElementByChildNodes(
   while (low <= high) {
     const mid = Math.floor((low + high) / 2)
     const candidate = buildElementHtmlWithChildRange(element, childNodes, 0, mid)
-    if (canFitInEmptyPage(candidate, measure, tolerance)) {
+    if (canFit(candidate, measure, tolerance, prefixHtml)) {
       best = mid
       low = mid + 1
     } else {
@@ -109,6 +110,7 @@ function trySplitElementByTextContent(
   element: Element,
   measure: HTMLElement,
   tolerance: number,
+  prefixHtml = '',
 ): { fittingHtml: string; remainingHtml: string } | null {
   const text = element.textContent ?? ''
   const chars = Array.from(text)
@@ -120,7 +122,7 @@ function trySplitElementByTextContent(
     const mid = Math.floor((low + high) / 2)
     const fittingEl = element.cloneNode(false) as Element
     fittingEl.textContent = chars.slice(0, mid).join('')
-    if (canFitInEmptyPage(fittingEl.outerHTML, measure, tolerance)) {
+    if (canFit(fittingEl.outerHTML, measure, tolerance, prefixHtml)) {
       best = mid
       low = mid + 1
     } else {
@@ -141,15 +143,22 @@ function trySplitOversizedBlock(
   block: string,
   measure: HTMLElement,
   tolerance: number,
+  prefixHtml = '',
 ): { fittingHtml: string; remainingHtml: string } | null {
   const container = document.createElement('div')
   container.innerHTML = block
   const element = container.firstElementChild
   if (!element) return null
-  if (element.tagName.toUpperCase() === 'H1') return null
-  const childSplit = trySplitElementByChildNodes(element, measure, tolerance)
+  const tagName = element.tagName.toUpperCase()
+  if (tagName === 'H1') return null
+  // Headings (H2–H6) have inline children whose boundaries don't align
+  // with page breaks — a child-node split orphans numbering prefixes.
+  // Use character-level text-content split instead.
+  const childSplit = tagName.startsWith('H')
+    ? null
+    : trySplitElementByChildNodes(element, measure, tolerance, prefixHtml)
   if (childSplit) return childSplit
-  return trySplitElementByTextContent(element, measure, tolerance)
+  return trySplitElementByTextContent(element, measure, tolerance, prefixHtml)
 }
 
 function paginateBlocks(
@@ -184,6 +193,19 @@ function paginateBlocks(
       continue
     }
     if (currentPageHtml.length > 0) {
+      const split = trySplitOversizedBlock(
+        block,
+        measure,
+        options.overflowTolerancePx,
+        currentPageHtml,
+      )
+      if (split) {
+        currentPageHtml = `${currentPageHtml}${split.fittingHtml}`
+        pushPage()
+        pending.unshift(split.remainingHtml)
+        measure.innerHTML = ''
+        continue
+      }
       pushPage()
       pending.unshift(block)
       measure.innerHTML = ''
@@ -244,6 +266,11 @@ export function usePaginator(options: UsePaginatorOptions = {}) {
     return getPageContentHeightPx(pageConfig)
   }, [ruleStore.currentRule])
 
+  const getPageWidth = useCallback(() => {
+    const pageConfig = ruleStore.currentRule?.page ?? DEFAULT_PAGE_CONFIG
+    return getPageContentWidthPx(pageConfig)
+  }, [ruleStore.currentRule])
+
   const goToPage = useCallback(
     (page: number) => {
       const count = pages.length
@@ -260,8 +287,11 @@ export function usePaginator(options: UsePaginatorOptions = {}) {
       const measure = measureRef.current
       if (!measure) return
       const pageHeight = getPageHeight()
+      const pageWidth = getPageWidth()
       measure.style.display = 'flow-root'
       measure.style.overflow = 'hidden'
+      measure.style.boxSizing = 'content-box'
+      measure.style.width = `${pageWidth}px`
       measure.style.height = `${pageHeight}px`
 
       try {
@@ -284,7 +314,7 @@ export function usePaginator(options: UsePaginatorOptions = {}) {
         measure.innerHTML = ''
       }
     },
-    [getPageHeight, resolved, ruleStore.currentRule],
+    [getPageHeight, getPageWidth, resolved, ruleStore.currentRule],
   )
 
   return {

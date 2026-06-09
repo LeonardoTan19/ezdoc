@@ -90,7 +90,7 @@ export function A4Paper({ html }: A4PaperProps) {
               <article
                 key={idx}
                 data-page-index={idx + 1}
-                className="paper-sheet preview-content w-[210mm] bg-white shadow-lg dark:shadow-neutral-950"
+                className="paper-sheet preview-content relative w-[210mm] min-h-[297mm] bg-white shadow-lg dark:shadow-neutral-950"
               >
                 <div dangerouslySetInnerHTML={{ __html: pageHtml }} />
                 {paginationEnabled && meta?.pagination && (
