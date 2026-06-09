@@ -2,7 +2,7 @@ import type { RuleConfig } from '../../schema'
 import type { HostSelectors, StyleNode } from '../types'
 import { scopeSelectors } from '../css-scope'
 import { toCssCustomProperty } from '../css-variable'
-import { buildContentFontPath, buildFontFamilyValue, declaration, resolveHeadingTargets, styleRule } from '../compiler-internals'
+import { buildCharGridLetterSpacing, buildContentFontPath, buildFontFamilyValue, declaration, resolveHeadingTargets, styleRule } from '../compiler-internals'
 
 export function buildHeadingRules(config: RuleConfig, host: HostSelectors): StyleNode[] {
   const rules: StyleNode[] = []
@@ -11,6 +11,9 @@ export function buildHeadingRules(config: RuleConfig, host: HostSelectors): Styl
   headingTargets.forEach((headingTarget) => {
     const level = headingTarget.level
     const selectors = headingTarget.selectors
+
+    const headingConfig = config.content[level]
+    const letterSpacing = buildCharGridLetterSpacing(level, headingConfig?.paragraph.charsPerLine)
 
     rules.push(
       styleRule(scopeSelectors(selectors, host.rootContent), [
@@ -22,7 +25,8 @@ export function buildHeadingRules(config: RuleConfig, host: HostSelectors): Styl
         declaration('line-height', `var(${toCssCustomProperty(`content.${level}.paragraph.spacing.lineHeight`)})`),
         declaration('color', `var(${toCssCustomProperty(`content.${level}.style.colors.text`)})`),
         declaration('margin-top', `var(${toCssCustomProperty(`content.${level}.paragraph.spacing.before`)})`),
-        declaration('margin-bottom', `var(${toCssCustomProperty(`content.${level}.paragraph.spacing.after`)})`)
+        declaration('margin-bottom', `var(${toCssCustomProperty(`content.${level}.paragraph.spacing.after`)})`),
+        ...(letterSpacing ? [letterSpacing] : [])
       ])
     )
 

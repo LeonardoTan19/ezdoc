@@ -1,9 +1,15 @@
+import type { RuleConfig } from '../../schema'
 import type { HostSelectors, StyleNode } from '../types'
 import { scopeSelectors } from '../css-scope'
 import { toCssCustomProperty } from '../css-variable'
-import { buildContentFontPath, buildFontFamilyValue, declaration, styleRule } from '../compiler-internals'
+import { buildCharGridLetterSpacing, buildContentFontPath, buildFontFamilyValue, declaration, styleRule } from '../compiler-internals'
 
-export function buildBodyRules(host: HostSelectors): StyleNode[] {
+export function buildBodyRules(config: RuleConfig, host: HostSelectors): StyleNode[] {
+  // Justified CJK text cannot stretch around an unbreakable Latin run, so a long
+  // word drops to the next line and leaves a visible gap. break-all lets the run
+  // break at the line edge to fill the line; non-justified text has no gap to fill.
+  const bodyWordBreak = config.content.body.paragraph.align === 'justify' ? 'break-all' : 'normal'
+  const bodyLetterSpacing = buildCharGridLetterSpacing('body', config.content.body.paragraph.charsPerLine)
   return [
     styleRule(host.rootContent, [
       declaration('font-family', `var(${toCssCustomProperty('content.body.fonts.cjkFamily')})`),
@@ -11,7 +17,8 @@ export function buildBodyRules(host: HostSelectors): StyleNode[] {
       declaration('font-weight', `var(${toCssCustomProperty('content.body.style.weight')})`),
       declaration('line-height', `var(${toCssCustomProperty('content.body.paragraph.spacing.lineHeight')})`),
       declaration('color', `var(${toCssCustomProperty('content.body.style.colors.text')})`),
-      declaration('background-color', `var(${toCssCustomProperty('content.body.style.colors.background')})`)
+      declaration('background-color', `var(${toCssCustomProperty('content.body.style.colors.background')})`),
+      declaration('overflow-wrap', 'break-word')
     ]),
     styleRule(host.paperContent, [
       declaration(
@@ -37,7 +44,9 @@ export function buildBodyRules(host: HostSelectors): StyleNode[] {
       declaration('margin-bottom', `var(${toCssCustomProperty('content.body.paragraph.spacing.after')})`),
       declaration('text-indent', `var(${toCssCustomProperty('content.body.paragraph.indent')})`),
       declaration('text-align', `var(${toCssCustomProperty('content.body.paragraph.align')})`),
-      declaration('line-height', `var(${toCssCustomProperty('content.body.paragraph.spacing.lineHeight')})`)
+      declaration('line-height', `var(${toCssCustomProperty('content.body.paragraph.spacing.lineHeight')})`),
+      declaration('word-break', bodyWordBreak),
+      ...(bodyLetterSpacing ? [bodyLetterSpacing] : [])
     ])
   ]
 }

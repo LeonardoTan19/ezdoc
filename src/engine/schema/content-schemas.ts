@@ -48,6 +48,12 @@ export const ParagraphConfigSchema = z.object({
   align: TextAlignSchema,
   indent: CssLengthSchema,
   spacing: ParagraphSpacingConfigSchema,
+  /**
+   * Target characters per line for a CJK character grid. When set, the compiler
+   * emits a calc()-based letter-spacing (版心宽 / charsPerLine − 字号) so each
+   * line holds exactly this many full-width characters. Omit for natural wrapping.
+   */
+  charsPerLine: z.number().int().positive().nullable().optional(),
 })
 export type ParagraphConfig = z.infer<typeof ParagraphConfigSchema>
 

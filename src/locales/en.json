@@ -286,6 +286,7 @@
 			"cssLength": "Must be a valid CSS length (e.g. 16pt, 37mm, 2em, 0)",
 			"cssLineHeight": "Must be a valid line-height (number or length)",
 			"cssParagraphSpacing": "Must be a valid paragraph spacing (length, 0, or Nlines)",
+			"charsPerLine": "Must be a positive integer, or omitted to disable the per-line character grid",
 			"cssColor": "Must be a valid color value (hex/rgb/rgba/hsl/hsla)",
 			"fontWeight": "Must be a 100-900 hundred-step number",
 			"textAlign": "Must be one of left/center/right/justify",

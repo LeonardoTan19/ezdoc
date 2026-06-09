@@ -136,3 +136,20 @@ export function buildPageSizeValue(page: PageConfig, dimensions: { width: string
 export function mapTokensToDeclarations(tokens: Record<string, string>): StyleDeclaration[] {
   return Object.entries(tokens).map(([property, value]) => declaration(property, value))
 }
+
+// Emits a CJK character-grid letter-spacing for the given content level when
+// charsPerLine is set. The browser computes (版心宽 / charsPerLine − 字号) at
+// layout time, so each line holds exactly charsPerLine full-width characters.
+// The value depends only on page width, margins, and font size — never on the
+// rendered content — so heading numbering prefixes and .latin-text spans do
+// not perturb the grid. Returns null when charsPerLine is unset.
+export function buildCharGridLetterSpacing(level: string, charsPerLine: number | null | undefined): StyleDeclaration | null {
+  if (typeof charsPerLine !== 'number' || !Number.isInteger(charsPerLine) || charsPerLine <= 0) {
+    return null
+  }
+
+  const contentWidth = `(var(${toCssCustomProperty('page.dimension.width')}) - var(${toCssCustomProperty('page.margins.left')}) - var(${toCssCustomProperty('page.margins.right')}))`
+  const fontSize = `var(${toCssCustomProperty(`content.${level}.style.size`)})`
+
+  return declaration('letter-spacing', `calc(${contentWidth} / ${charsPerLine} - ${fontSize})`)
+}

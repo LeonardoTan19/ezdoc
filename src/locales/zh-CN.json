@@ -286,6 +286,7 @@
 			"cssLength": "必须是合法长度值（例如 16pt、37mm、2em、0）",
 			"cssLineHeight": "必须是合法行高值（数字或长度值）",
 			"cssParagraphSpacing": "必须是合法段间距（支持长度值、0、或 Nlines）",
+			"charsPerLine": "必须是正整数，或留空以禁用每行字符网格",
 			"cssColor": "必须是合法颜色值（hex/rgb/rgba/hsl/hsla）",
 			"fontWeight": "必须是 100-900 之间的百位数字",
 			"textAlign": "必须是 left/center/right/justify 之一",

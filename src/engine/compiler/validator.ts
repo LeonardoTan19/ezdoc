@@ -148,6 +148,18 @@ const validateCssParagraphSpacing: Validator = (value, path, issues) => {
   }
 }
 
+// Optional CJK character-grid target: a positive integer, or null/undefined to
+// disable. Anything else (0, negative, non-integer, non-number) is invalid.
+const validateCharsPerLine: Validator = (value, path, issues) => {
+  if (value === undefined || value === null) {
+    return
+  }
+
+  if (typeof value !== 'number' || !Number.isInteger(value) || value <= 0) {
+    pushError(issues, path, ValidationErrorCode.CHARS_PER_LINE)
+  }
+}
+
 function validateContentItem(contentItem: unknown, path: string, issues: ValidationIssue[]): void {
   if (!isObject(contentItem)) {
     pushError(issues, path, ValidationErrorCode.MISSING_OR_INVALID_FIELD)
@@ -189,6 +201,7 @@ function validateContentItem(contentItem: unknown, path: string, issues: Validat
   } else {
     validateTextAlign(contentItem.paragraph.align, `${path}.paragraph.align`, issues)
     validateCssLength(contentItem.paragraph.indent, `${path}.paragraph.indent`, issues)
+    validateCharsPerLine(contentItem.paragraph.charsPerLine, `${path}.paragraph.charsPerLine`, issues)
 
     if (!isObject(contentItem.paragraph.spacing)) {
       pushError(issues, `${path}.paragraph.spacing`, ValidationErrorCode.MISSING_OR_INVALID_FIELD)

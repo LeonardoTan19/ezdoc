@@ -54,6 +54,30 @@ describe('compileRule', () => {
     expect(compiled.rules).toHaveLength(baseCompiled.rules.length)
   })
 
+  it('emits a calc-based letter-spacing grid when charsPerLine is set', () => {
+    // The builtin rule (33476) sets body charsPerLine=28 and h1 charsPerLine=20.
+    // The grid value depends only on page width/margins/font-size, never on
+    // rendered content, so heading numbering prefixes cannot perturb it.
+    const compiled = compileRule(createValidRule(), DEFAULT_HOST)
+
+    expect(compiled.cssText).toContain(
+      'letter-spacing: calc((var(--page-dimension-width) - var(--page-margins-left) - var(--page-margins-right)) / 28 - var(--content-body-style-size));',
+    )
+    expect(compiled.cssText).toContain(
+      'letter-spacing: calc((var(--page-dimension-width) - var(--page-margins-left) - var(--page-margins-right)) / 20 - var(--content-h1-style-size));',
+    )
+  })
+
+  it('omits letter-spacing when charsPerLine is unset', () => {
+    const rule = createValidRule()
+    Object.values(rule.content).forEach((item) => {
+      delete (item as { paragraph: { charsPerLine?: number } }).paragraph.charsPerLine
+    })
+    const compiled = compileRule(rule, DEFAULT_HOST)
+
+    expect(compiled.cssText).not.toContain('letter-spacing')
+  })
+
   it('uses injected custom host selectors instead of defaults', () => {
     const customHost: HostSelectors = {
       rootContent: ['.custom-preview', '.custom-export'],

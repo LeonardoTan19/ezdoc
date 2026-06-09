@@ -12,7 +12,7 @@ export function compileRule(config: RuleConfig, host: HostSelectors): CompiledRu
   const tokens = generateRuleTokens(config)
   const rules: StyleNode[] = [
     ...buildRootRule(tokens),
-    ...buildBodyRules(host),
+    ...buildBodyRules(config, host),
     ...buildHeadingRules(config, host),
     ...buildPageRule(config),
     ...buildPrintRules(config, host)

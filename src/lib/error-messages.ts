@@ -8,6 +8,7 @@ export const ERROR_CODE_TO_I18N_KEY: Record<ErrorCode, string> = {
   [ValidationErrorCode.CSS_LENGTH]: 'errors.validator.cssLength',
   [ValidationErrorCode.CSS_LINE_HEIGHT]: 'errors.validator.cssLineHeight',
   [ValidationErrorCode.CSS_PARAGRAPH_SPACING]: 'errors.validator.cssParagraphSpacing',
+  [ValidationErrorCode.CHARS_PER_LINE]: 'errors.validator.charsPerLine',
   [ValidationErrorCode.CSS_COLOR]: 'errors.validator.cssColor',
   [ValidationErrorCode.FONT_WEIGHT]: 'errors.validator.fontWeight',
   [ValidationErrorCode.TEXT_ALIGN]: 'errors.validator.textAlign',
