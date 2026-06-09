@@ -6,8 +6,8 @@ content:
     fonts:
       latinFamily: Times New Roman, serif
       cjkFamily: 仿宋_GB2312, FangSong, STFangsong, serif
-      cnQuoteFamily: 方正小标宋_GBK, 方正小标宋简体, FZXiaoBiaoSong-B05, 黑体, SimHei, STHeiti, sans-serif
-      cnBookTitleFamily: 方正小标宋_GBK, 方正小标宋简体, FZXiaoBiaoSong-B05, 黑体, SimHei, STHeiti, sans-serif
+      cnQuoteFamily: 仿宋_GB2312, FangSong, STFangsong, serif
+      cnBookTitleFamily: 仿宋_GB2312, FangSong, STFangsong, serif
     style:
       size: 16pt
       weight: 400
@@ -17,6 +17,7 @@ content:
     paragraph:
       align: justify
       indent: 2em
+      charsPerLine: 28
       spacing:
         lineHeight: 10.39mm
         before: 0lines
@@ -37,6 +38,7 @@ content:
     paragraph:
       align: center
       indent: 0em
+      charsPerLine: 20
       spacing:
         lineHeight: 10.39mm
         before: 2lines
@@ -57,6 +59,7 @@ content:
     paragraph:
       align: left
       indent: 2em
+      charsPerLine: 28
       spacing:
         lineHeight: 10.39mm
         before: 0lines
@@ -77,6 +80,7 @@ content:
     paragraph:
       align: left
       indent: 2em
+      charsPerLine: 28
       spacing:
         lineHeight: 10.39mm
         before: 0lines
@@ -97,13 +101,14 @@ content:
     paragraph:
       align: left
       indent: 2em
+      charsPerLine: 28
       spacing:
         lineHeight: 10.39mm
         before: 0lines
         after: 0lines
 pagination:
   enabled: true
-  format: '— {currentPage} / {totalPage} —'
+  format: '— {currentPage} —'
   numberStyle: arabic
   style:
     fonts:
@@ -116,7 +121,7 @@ pagination:
   position:
     vertical:
       anchor: bottom
-      offset: 7mm
+      offset: 17mm
     horizontal:
       anchor: center
       offset: 0mm
