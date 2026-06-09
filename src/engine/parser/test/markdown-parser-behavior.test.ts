@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { MarkdownParser } from '../markdown-parser'
+import { getBuiltinRules } from '../../index'
 import { headingStyles, pipelineMarkdown } from './fixtures'
 
 describe('MarkdownParser behavior', () => {
@@ -100,6 +101,29 @@ describe('MarkdownParser behavior', () => {
     expect(html).toContain('<h2><span class="latin-text">1</span>、阿拉伯</h2>')
     expect(html).toContain('<h3><span class="latin-text">I</span>.罗马大写</h3>')
     expect(html).toContain('<h4><span class="latin-text">i</span>.罗马小写</h4>')
+  })
+
+  it('wires headingStyles from rule.content.*.style.index into parser config', () => {
+    // Production path: use-markdown.ts derives headingStyles from
+    // rule.content.{h1-h4}.style.index and merges into parser options.
+    const rule = getBuiltinRules().find((r) => r.name.includes('9704')) ?? getBuiltinRules()[0]!
+    const parser = new MarkdownParser(undefined, {
+      ...rule.parser,
+      headingStyles: {
+        h1: rule.content.h1.style.index ?? '0lines',
+        h2: rule.content.h2.style.index ?? '0lines',
+        h3: rule.content.h3.style.index ?? '0lines',
+        h4: rule.content.h4.style.index ?? '0lines',
+      },
+    })
+
+    const html = parser.parse('## 二级\n### 三级\n#### 四级').html
+
+    // GB/T 9704 headingStyles from content:
+    // h2='{zhHansIndex}、' → '一、'  h3='（{zhHansIndex}）' → '（一）'  h4='{arabicIndex}．' → '1．'
+    expect(html).toContain('<h2>一、二级</h2>')
+    expect(html).toContain('<h3>（一）三级</h3>')
+    expect(html).toContain('<h4><span class="latin-text">1</span>．四级</h4>')
   })
 
   it('supports local style container with canonical path syntax', () => {
