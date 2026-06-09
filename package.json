@@ -10,7 +10,8 @@
     "format": "prettier --write \"**/*.{ts,tsx}\"",
     "typecheck": "tsc --noEmit",
     "preview": "vite preview",
-    "tauri": "tauri"
+    "tauri": "tauri",
+    "release": "bun run scripts/release.ts"
   },
   "dependencies": {
     "@codemirror/commands": "^6.10.3",
