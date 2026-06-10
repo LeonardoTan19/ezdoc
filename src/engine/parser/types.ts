@@ -1,5 +1,4 @@
 import type Token from 'markdown-it/lib/token.mjs'
-import type MarkdownIt from 'markdown-it'
 import type { ParserConfig } from '../schema'
 
 export const ParseErrorCode = {
@@ -28,9 +27,18 @@ export interface HtmlPostprocessor {
   process(html: string, options: ParserConfig): string
 }
 
+/**
+ * Mirrors `MarkdownIt.PluginWithOptions<T>`. Uses `import()` type
+ * expression to access the namespace member without a top-level
+ * `import type`, which is incompatible with erasableSyntaxOnly /
+ * verbatimModuleSyntax.
+ */
+export type MdPluginWithOptions<T = unknown> =
+  import('markdown-it').PluginWithOptions<T>
+
 export interface ParserPipeline {
   preprocessors: Preprocessor[]
-  mdPlugins: MarkdownIt.PluginWithOptions<ParserConfig>[]
+  mdPlugins: MdPluginWithOptions<ParserConfig>[]
   tokenProcessors: TokenProcessor[]
   htmlPostprocessors: HtmlPostprocessor[]
 }

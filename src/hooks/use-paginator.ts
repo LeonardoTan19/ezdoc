@@ -259,7 +259,7 @@ export function usePaginator(options: UsePaginatorOptions = {}) {
   const [pages, setPages] = useState<string[]>([''])
   const [pageMetas, setPageMetas] = useState<PageRenderMeta[]>([])
   const [currentPage, setCurrentPage] = useState(1)
-  const measureRef = useRef<HTMLElement | null>(null)
+  const measureRef = useRef<HTMLDivElement | null>(null)
 
   const getPageHeight = useCallback(() => {
     const pageConfig = ruleStore.currentRule?.page ?? DEFAULT_PAGE_CONFIG

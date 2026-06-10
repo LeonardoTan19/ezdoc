@@ -1,5 +1,5 @@
-import type MarkdownIt from 'markdown-it'
 import type { ParserConfig } from '../../../schema'
+import type { MdPluginWithOptions } from '../../types'
 import { toCssCustomProperty } from '../../../compiler/css-variable'
 import { sanitizeCssValue } from '../../../utils/css-sanitize-utils'
 import { resolveCanonicalLocalStylePath } from '../../../utils/local-style-path-utils'
@@ -96,10 +96,29 @@ function parseMultiLocalStyleDescriptors(descriptor: string, options: ParserConf
   return declarations.length > 0 ? declarations.join(' ') : ''
 }
 
-export const localStyleContainerPlugin: MarkdownIt.PluginWithOptions<ParserConfig> = (md, options) => {
+/**
+ * Minimal interface capturing the StateBlock shape used by this plugin.
+ * Narrower than markdown-it's full StateBlock — only declares the
+ * members we actually access.
+ */
+interface RuleBlockState {
+  src: string
+  bMarks: number[]
+  tShift: number[]
+  eMarks: number[]
+  line: number
+  push(type: string, tag: string, nesting: number): import('markdown-it/lib/token.mjs').default
+  md: {
+    block: {
+      tokenize(state: RuleBlockState, startLine: number, endLine: number): void
+    }
+  }
+}
+
+export const localStyleContainerPlugin: MdPluginWithOptions<ParserConfig> = (md, options) => {
   const parserOptions = options as ParserConfig
 
-  const ruleHandler = (state: Parameters<Parameters<MarkdownIt['block']['ruler']['before']>[2]>[0], startLine: number, endLine: number, silent: boolean): boolean => {
+  const ruleHandler = (state: RuleBlockState, startLine: number, endLine: number, silent: boolean): boolean => {
     const startPos = (state.bMarks[startLine] ?? 0) + (state.tShift[startLine] ?? 0)
     const maxPos = state.eMarks[startLine] ?? startPos
     const firstLine = state.src.slice(startPos, maxPos).trim()

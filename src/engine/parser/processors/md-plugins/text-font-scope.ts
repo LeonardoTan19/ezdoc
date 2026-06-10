@@ -1,5 +1,5 @@
-import type MarkdownIt from 'markdown-it'
 import type { ParserConfig } from '../../../schema'
+import type { MdPluginWithOptions } from '../../types'
 
 const TEXT_TOKEN_PATTERN = /[A-Za-z0-9]+|[“”‘’]|[《》〈〉]/g
 
@@ -31,7 +31,7 @@ function wrapTextScopes(content: string, escapeHtml: (source: string) => string)
   return result
 }
 
-export const textFontScopePlugin: MarkdownIt.PluginWithOptions<ParserConfig> = (md) => {
+export const textFontScopePlugin: MdPluginWithOptions<ParserConfig> = (md) => {
   const fallbackTextRenderer = md.renderer.rules.text
 
   md.renderer.rules.text = (tokens, index, options, env, self) => {

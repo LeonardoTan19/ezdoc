@@ -17,7 +17,7 @@ export function useSplitPane(options: UseSplitPaneOptions = {}) {
 
   const [editorWidthPercent, setEditorWidthPercent] = useState(initialPercent)
   const isResizing = useRef(false)
-  const workspaceRef = useRef<HTMLElement | null>(null)
+  const workspaceRef = useRef<HTMLDivElement | null>(null)
 
   const clampPercent = useCallback(
     (raw: number, containerWidth: number) => {
