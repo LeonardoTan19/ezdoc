@@ -1,6 +1,6 @@
 # ezdoc
 
-[![Version](https://img.shields.io/badge/version-v0.0.1-blue)](https://github.com/LeonardoTan19/ezdoc/releases)
+[![Version](https://img.shields.io/badge/version-v0.1.0-blue)](https://github.com/LeonardoTan19/ezdoc/releases)
 [![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey)](https://github.com/LeonardoTan19/ezdoc/releases)
 [![Bun](https://img.shields.io/badge/built%20with-Bun-fbf0df?logo=bun)](https://bun.sh)
 [![Tauri](https://img.shields.io/badge/built%20with-Tauri%202-ffc131?logo=tauri)](https://v2.tauri.app/)
