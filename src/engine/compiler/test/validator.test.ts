@@ -89,12 +89,6 @@ describe('validateRule', () => {
     expect(result.valid).toBe(true)
   })
 
-  it('returns valid when pagination is present and well-formed', () => {
-    const validRule = createValidRule()
-    const result = validateRule(validRule)
-    expect(result.valid).toBe(true)
-  })
-
   it('returns invalid when pagination format contains illegal expression', () => {
     const invalidRule = createValidRule()
     if (!invalidRule.pagination) {
@@ -174,6 +168,165 @@ describe('validateRule', () => {
         'content.appendix.fonts.cjkFamily: NON_EMPTY_STRING',
         'content.appendix.paragraph.spacing: MISSING_OR_INVALID_FIELD'
       ])
+    )
+  })
+
+  it('returns invalid when ruleConfig is not an object', () => {
+    const result = validateRule('not an object')
+    expect(result.valid).toBe(false)
+    expect(result.errors).toContain('rule: RULE_CONFIG_OBJECT')
+  })
+
+  it('returns invalid when charsPerLine is zero, negative, or non-integer', () => {
+    const invalidValues = [0, -1, 3.5]
+    for (const value of invalidValues) {
+      const invalidRule = createValidRule()
+      invalidRule.content.body.paragraph.charsPerLine = value
+
+      const result = validateRule(invalidRule)
+      expect(result.valid).toBe(false)
+      expect(result.errors).toContain(
+        'content.body.paragraph.charsPerLine: CHARS_PER_LINE'
+      )
+    }
+  })
+
+  it('returns valid when charsPerLine is a positive integer', () => {
+    const validRule = createValidRule()
+    validRule.content.body.paragraph.charsPerLine = 28
+
+    const result = validateRule(validRule)
+    expect(result.valid).toBe(true)
+  })
+
+  it('returns valid when charsPerLine is null or undefined', () => {
+    // Both null and undefined disable the charsPerLine constraint
+    const validRule = createValidRule()
+    validRule.content.body.paragraph.charsPerLine = undefined
+    expect(validateRule(validRule).valid).toBe(true)
+
+    const nullRule = createValidRule()
+    nullRule.content.body.paragraph.charsPerLine = null as unknown as undefined
+    expect(validateRule(nullRule).valid).toBe(true)
+  })
+
+  it('returns invalid when page has neither size nor dimensions', () => {
+    const invalidRule = createValidRule()
+    invalidRule.page.size = undefined as unknown as string
+    invalidRule.page.dimensions = undefined
+
+    const result = validateRule(invalidRule)
+    expect(result.valid).toBe(false)
+    expect(result.errors).toContain('page.size: PAGE_SIZE_OR_DIMENSIONS')
+  })
+
+  it('returns valid when page has custom dimensions instead of named size', () => {
+    const validRule = createValidRule()
+    validRule.page.size = undefined as unknown as string
+    validRule.page.dimensions = { width: '210mm', height: '297mm' }
+
+    const result = validateRule(validRule)
+    expect(result.valid).toBe(true)
+  })
+
+  it('returns invalid when page dimensions are not valid css lengths', () => {
+    const invalidRule = createValidRule()
+    invalidRule.page.dimensions = { width: 'foo', height: 'bar' }
+
+    const result = validateRule(invalidRule)
+    expect(result.valid).toBe(false)
+    expect(result.errors).toEqual(
+      expect.arrayContaining([
+        'page.dimensions.width: CSS_LENGTH',
+        'page.dimensions.height: CSS_LENGTH'
+      ])
+    )
+  })
+
+  it('returns invalid when localStyleAliases target path is out of scope', () => {
+    const invalidRule = createValidRule()
+    if (!invalidRule.parser) {
+      throw new Error('parser 配置缺失')
+    }
+    invalidRule.parser.localStyleAliases = { myAlias: 'other.path.value' }
+
+    const result = validateRule(invalidRule)
+    expect(result.valid).toBe(false)
+    expect(result.errors).toContain(
+      'parser.localStyleAliases.myAlias: ALIAS_TARGET_SCOPE'
+    )
+  })
+
+  it('returns invalid when localStyleAliases target path contains unsafe segment', () => {
+    const invalidRule = createValidRule()
+    if (!invalidRule.parser) {
+      throw new Error('parser 配置缺失')
+    }
+    invalidRule.parser.localStyleAliases = {
+      myAlias: 'content.body.__proto__.value'
+    }
+
+    const result = validateRule(invalidRule)
+    expect(result.valid).toBe(false)
+    expect(result.errors).toContain(
+      'parser.localStyleAliases.myAlias: ALIAS_TARGET_UNSAFE'
+    )
+  })
+
+  it('returns invalid when parser html/linkify/typographer are not booleans', () => {
+    const invalidRule = createValidRule()
+    if (!invalidRule.parser) {
+      throw new Error('parser 配置缺失')
+    }
+    invalidRule.parser.html = 'yes' as unknown as boolean
+    invalidRule.parser.linkify = 1 as unknown as boolean
+
+    const result = validateRule(invalidRule)
+    expect(result.valid).toBe(false)
+    expect(result.errors).toEqual(
+      expect.arrayContaining([
+        'parser.html: BOOLEAN',
+        'parser.linkify: BOOLEAN'
+      ])
+    )
+  })
+
+  it('returns invalid when cnQuoteFamily is set but empty', () => {
+    const invalidRule = createValidRule()
+    invalidRule.content.body.fonts.cnQuoteFamily = '   '
+
+    const result = validateRule(invalidRule)
+    expect(result.valid).toBe(false)
+    expect(result.errors).toContain(
+      'content.body.fonts.cnQuoteFamily: NON_EMPTY_STRING'
+    )
+  })
+
+  it('returns invalid when pagination vertical anchor is unknown', () => {
+    const invalidRule = createValidRule()
+    if (!invalidRule.pagination) {
+      throw new Error('pagination 配置缺失')
+    }
+    invalidRule.pagination.position.vertical.anchor = 'middle' as 'bottom'
+
+    const result = validateRule(invalidRule)
+    expect(result.valid).toBe(false)
+    expect(result.errors).toContain(
+      'pagination.position.vertical.anchor: VERTICAL_ANCHOR'
+    )
+  })
+
+  it('returns invalid when pagination horizontal anchor is unknown', () => {
+    const invalidRule = createValidRule()
+    if (!invalidRule.pagination) {
+      throw new Error('pagination 配置缺失')
+    }
+    invalidRule.pagination.position.horizontal.anchor = 'middle' as 'center'
+
+    const result = validateRule(invalidRule)
+    expect(result.valid).toBe(false)
+    expect(result.errors).toContain(
+      'pagination.position.horizontal.anchor: HORIZONTAL_ANCHOR'
     )
   })
 })

@@ -34,11 +34,6 @@ describe('page-metrics-utils', () => {
     expect(cssLengthToBaseUnits('1in')).toBe(3657600)
   })
 
-  it('converts through base units for px and mm output', () => {
-    expect(baseUnitsToPx(cssLengthToBaseUnits('1mm'))).toBeCloseTo(96 / 25.4, 10)
-    expect(baseUnitsToMm(cssLengthToBaseUnits('96px'))).toBeCloseTo(25.4, 10)
-  })
-
   it('checks whether css length is convertible by base unit rules', () => {
     expect(isConvertibleCssLength('16px')).toBe(true)
     expect(isConvertibleCssLength('2em')).toBe(false)

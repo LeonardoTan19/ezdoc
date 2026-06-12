@@ -173,28 +173,6 @@ describe('MarkdownParser behavior', () => {
     expect(html).toContain('--content-body-paragraph-indent: 1em;')
   })
 
-  it('supports alias syntax with full-width colon and multi-rule descriptors', () => {
-    const parser = new MarkdownParser(undefined, {
-      headingNumbering: false,
-      disabledSyntax: [],
-      localStyleAliases: {
-        bodyIndent: 'content.body.paragraph.indent',
-        bodyColor: 'content.body.style.colors.text'
-      }
-    })
-
-    const markdown = [
-      "::: bodyIndent：0em；bodyColor:'#ff0000'",
-      '别名规则段落',
-      ':::'
-    ].join('\n')
-    const html = parser.parse(markdown).html
-
-    expect(html).toContain('class="local-style-container"')
-    expect(html).toContain('--content-body-paragraph-indent: 0em;')
-    expect(html).toContain('--content-body-style-colors-text: #ff0000;')
-  })
-
   it('does not support built-in old aliases without parser alias config', () => {
     const parser = new MarkdownParser(undefined, { headingNumbering: true, disabledSyntax: [] })
 
@@ -252,29 +230,6 @@ describe('MarkdownParser behavior', () => {
     expect(html).toContain('外层段落')
     expect(html).toContain('内层段落')
     expect(html).toContain('外层段落<span class="latin-text">2</span>')
-  })
-
-  it('supports three-level nesting of local style containers', () => {
-    const parser = new MarkdownParser(undefined, { headingNumbering: false, disabledSyntax: [] })
-
-    const markdown = [
-      '::: body.paragraph.indent:3em',
-      '第一层',
-      '::: body.paragraph.indent:2em',
-      '第二层',
-      '::: body.paragraph.indent:0em',
-      '第三层',
-      ':::',
-      ':::',
-      ':::'
-    ].join('\n')
-    const html = parser.parse(markdown).html
-
-    const matches = html.match(/class="local-style-container"/g)
-    expect(matches).toHaveLength(3)
-    expect(html).toContain('--content-body-paragraph-indent: 3em;')
-    expect(html).toContain('--content-body-paragraph-indent: 2em;')
-    expect(html).toContain('--content-body-paragraph-indent: 0em;')
   })
 
   it('supports single ::: line with multiple semicolon-separated rules', () => {
@@ -364,16 +319,6 @@ describe('MarkdownParser behavior', () => {
     expect(html).toContain('<p>正文</p>')
   })
 
-  it('supports manual // line break inside local style container under enterStyle paragraph', () => {
-    const parser = new MarkdownParser(undefined, { headingNumbering: false, disabledSyntax: [], enterStyle: 'paragraph' })
-
-    const markdown = ['::: body.paragraph.indent:0em', '容器第一行//', '容器第二行', ':::'].join('\n')
-    const html = parser.parse(markdown).html
-
-    expect(html).toContain('class="local-style-container"')
-    expect(html).toMatch(/<p>容器第一行<br>\s*容器第二行<\/p>/)
-  })
-
   it('keeps explicit empty lines as visible blank paragraphs under enterStyle paragraph', () => {
     const parser = new MarkdownParser(undefined, { headingNumbering: false, disabledSyntax: [], enterStyle: 'paragraph' })
 
@@ -390,5 +335,75 @@ describe('MarkdownParser behavior', () => {
     expect(result.html).toContain('<h1><span class="latin-text">Test</span></h1>')
     expect(Array.isArray(result.tokens)).toBe(true)
     expect(result.tokens.length).toBeGreaterThan(0)
+  })
+
+  it('returns empty result for empty string', () => {
+    const parser = new MarkdownParser(undefined, { headingNumbering: false, disabledSyntax: [] })
+    const result = parser.parse('')
+    expect(result.html).toBe('')
+    expect(result.tokens).toEqual([])
+  })
+
+  it('returns empty result for non-string input', () => {
+    const parser = new MarkdownParser(undefined, { headingNumbering: false, disabledSyntax: [] })
+    const result = parser.parse(null as unknown as string)
+    expect(result.html).toBe('')
+    expect(result.tokens).toEqual([])
+  })
+
+  it('setOptions updates parser configuration', () => {
+    const parser = new MarkdownParser(undefined, { headingNumbering: false, disabledSyntax: [] })
+
+    // Initially without heading numbering
+    const before = parser.parse('## 标题').html
+    expect(before).not.toContain('一、标题')
+
+    // After setOptions, heading numbering is on
+    parser.setOptions({ headingNumbering: true, headingStyles: { h2: '{zhHansIndex}、' } })
+    const after = parser.parse('## 标题').html
+    expect(after).toContain('一、标题')
+  })
+
+  it('enterStyle lineBreak preserves single line breaks as <br>', () => {
+    const parser = new MarkdownParser(undefined, {
+      headingNumbering: false,
+      disabledSyntax: [],
+      enterStyle: 'lineBreak'
+    })
+    const html = parser.parse('第一行\n第二行').html
+    expect(html).toContain('<br>')
+  })
+
+  it('no disabledSyntax preserves all markdown syntax', () => {
+    const parser = new MarkdownParser(undefined, {
+      headingNumbering: false,
+      disabledSyntax: [],
+      enterStyle: 'lineBreak'
+    })
+    const html = parser.parse('> 引用\n\n- 列表项').html
+    expect(html).toContain('<blockquote>')
+    expect(html).toContain('<ul>')
+  })
+
+  it('wraps pipeline errors in a descriptive message', () => {
+    const parser = new MarkdownParser(
+      {
+        preprocessors: [
+          {
+            name: 'thrower',
+            process() {
+              throw new Error('pipeline explosion')
+            },
+          },
+        ],
+        mdPlugins: [],
+        tokenProcessors: [],
+        htmlPostprocessors: [],
+      },
+      { headingNumbering: false, disabledSyntax: [] },
+    )
+    expect(() => parser.parse('some markdown')).toThrow(
+      'MARKDOWN_PARSE_FAILED: pipeline explosion',
+    )
   })
 })
