@@ -80,5 +80,5 @@ jobs:
             echo "- Platform: \`${{ matrix.name }}\`"
             echo "- Version: \`${{ steps.tauri.outputs.appVersion }}\`"
             echo "- Release: ${{ steps.tauri.outputs.releaseHtmlUrl }}"
-            echo "- Artifacts: \`${{ steps.tauri.outputs.artifactPaths }}\`"
+            echo '- Artifacts: `${{ steps.tauri.outputs.artifactPaths }}`'
           } >> "$GITHUB_STEP_SUMMARY"
