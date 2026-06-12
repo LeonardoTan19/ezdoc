@@ -1,5 +1,6 @@
 import { useState, useRef, useCallback, useMemo } from 'react'
 import type { PaginationConfig } from '@/engine/schema'
+import { getBuiltinRules } from '@/engine'
 import { getPageContentHeightPx, getPageContentWidthPx } from '@/engine/utils/page-metrics-utils'
 import {
   collectBlocks,
@@ -35,11 +36,7 @@ const DEFAULT_OPTIONS: ResolvedPaginatorOptions = {
   localStyleContainerClassName: DEFAULT_LOCAL_STYLE_CONTAINER_CLASS_NAME,
 }
 
-const DEFAULT_PAGE_CONFIG = {
-  size: 'A4' as const,
-  orientation: 'portrait' as const,
-  margins: { top: '37mm', right: '26mm', bottom: '35mm', left: '28mm' },
-}
+const DEFAULT_PAGE_CONFIG = getBuiltinRules()[0]!.page
 
 function isOverflowing(el: HTMLElement, tolerance: number): boolean {
   const scrollOverflow = el.scrollHeight - el.clientHeight
@@ -100,6 +97,73 @@ function trySplitElementByChildNodes(
     }
   }
   if (best <= 0 || best >= childNodes.length) return null
+
+  // When the first non-fitting child is a text node, try to include
+  // as many of its characters as possible so we don't waste space
+  // pushing the entire trailing text to the next page.
+  // This is essential for paragraphs that contain inline elements
+  // (e.g. <span class="latin-text"> or <span class="cn-book-title">)
+  // followed by a long CJK text run.
+  const overflowChild = childNodes[best]
+  if (
+    overflowChild &&
+    overflowChild.nodeType === Node.TEXT_NODE &&
+    (overflowChild.textContent?.length ?? 0) > 0
+  ) {
+    const textChars = Array.from(overflowChild.textContent!)
+    let charLow = 0
+    let charHigh = textChars.length
+    let charBest = 0
+    while (charLow <= charHigh) {
+      const charMid = Math.floor((charLow + charHigh) / 2)
+      const testEl = element.cloneNode(false) as Element
+      for (let i = 0; i < best; i++) {
+        testEl.appendChild(childNodes[i].cloneNode(true))
+      }
+      if (charMid > 0) {
+        testEl.appendChild(
+          document.createTextNode(textChars.slice(0, charMid).join('')),
+        )
+      }
+      if (canFit(testEl.outerHTML, measure, tolerance, prefixHtml)) {
+        charBest = charMid
+        charLow = charMid + 1
+      } else {
+        charHigh = charMid - 1
+      }
+    }
+
+    if (charBest > 0) {
+      const fittingEl = element.cloneNode(false) as Element
+      for (let i = 0; i < best; i++) {
+        fittingEl.appendChild(childNodes[i].cloneNode(true))
+      }
+      fittingEl.appendChild(
+        document.createTextNode(textChars.slice(0, charBest).join('')),
+      )
+
+      const remainingEl = element.cloneNode(false) as Element
+      if (charBest < textChars.length) {
+        remainingEl.appendChild(
+          document.createTextNode(textChars.slice(charBest).join('')),
+        )
+      }
+      for (let i = best + 1; i < childNodes.length; i++) {
+        remainingEl.appendChild(childNodes[i].cloneNode(true))
+      }
+
+      // Continuation of a split paragraph — suppress text-indent to
+      // avoid double indentation.
+      remainingEl.setAttribute('data-split-from', 'child-text')
+      ;(remainingEl as HTMLElement).style.setProperty('text-indent', '0')
+
+      if (remainingEl.childNodes.length === 0) return null
+      const fittingHtml = fittingEl.outerHTML
+      const remainingHtml = remainingEl.outerHTML
+      if (fittingHtml && remainingHtml) return { fittingHtml, remainingHtml }
+    }
+  }
+
   const fittingHtml = buildElementHtmlWithChildRange(element, childNodes, 0, best)
   const remainingHtml = buildElementHtmlWithChildRange(element, childNodes, best, childNodes.length)
   if (!fittingHtml || !remainingHtml) return null
