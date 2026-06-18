@@ -29,6 +29,10 @@ import { serializeStyleSheet } from "../src/engine/compiler/serializer"
 import { toCssCustomProperty } from "../src/engine/compiler/css-variable"
 import { formatByStyle } from "../src/engine/utils/number-format-utils"
 import { evaluateNumericTemplateExpression } from "../src/engine/utils/template-expression-utils"
+import { headingNumberingProcessor } from "../src/engine/parser/processors/token/heading-numbering"
+import { syntaxStripper } from "../src/engine/parser/processors/preprocess/syntax-stripper"
+import { lineBreakNormalizer } from "../src/engine/parser/processors/preprocess/line-break-normalizer"
+import MarkdownIt from "markdown-it"
 
 const here = dirname(fileURLToPath(import.meta.url))
 const HISTORY_PATH = resolve(here, "history.jsonl")
@@ -118,7 +122,7 @@ const exprPattern = /\{([^{}]+)\}/g
 // Suite definition
 // ---------------------------------------------------------------------------
 
-type Group = "parser" | "compiler" | "utils" | "end-to-end"
+type Group = "parser" | "compiler" | "utils" | "end-to-end" | "incremental"
 
 interface TaskDef {
   group: Group
@@ -210,6 +214,110 @@ add("end-to-end", "render 200 page numbers", () => {
 })
 
 void compiledTokens
+
+// --- incremental (per-keystroke parse cost) ---------------------------------
+//
+// Edit model: append "。" to the last paragraph.  For a full reparse this is
+// the worst case (pays for the whole doc); for an incremental scheme it is the
+// cheapest edit (only the last block changes).
+//
+// NOTE: bun/node only measure the engine parse stage.  Pagination and React
+// render are not measurable without a browser layout engine.
+{
+  const editedHuge = docHuge + "。"
+  const incParser = pinnedParser()
+
+  const md = new MarkdownIt({
+    html: false,
+    breaks: false,
+    linkify: parserConfig.linkify,
+    typographer: parserConfig.typographer,
+  })
+  const preprocessed = lineBreakNormalizer.process(
+    syntaxStripper.process(editedHuge, parserConfig),
+    parserConfig,
+  )
+  const fullTokens = md.parse(preprocessed, {})
+  const fullProcessed = headingNumberingProcessor.process(fullTokens, parserConfig)
+  const lastBlock = PARAGRAPH + "。"
+
+  // True full reparse — pipeline without any caching (baseline)
+  add("incremental", "edit@end: true full reparse (huge 200p)", () => {
+    const s = syntaxStripper.process(editedHuge, parserConfig)
+    const p = lineBreakNormalizer.process(s, parserConfig)
+    const t = md.parse(p, {})
+    const pt = headingNumberingProcessor.process(t, parserConfig)
+    md.renderer.render(pt, md.options, {})
+  })
+
+  // MarkdownParser.parse() with built-in BlockCache
+  add("incremental", "edit@end: cached parse (huge 200p)", () => {
+    incParser.parse(editedHuge)
+  })
+
+  // Pipeline stages of the true full reparse, broken out individually
+  add("incremental", "stage: preprocess (huge)", () => {
+    const s = syntaxStripper.process(editedHuge, parserConfig)
+    lineBreakNormalizer.process(s, parserConfig)
+  })
+
+  add("incremental", "stage: md.parse tokenize (huge)", () => {
+    md.parse(preprocessed, {})
+  })
+
+  add("incremental", "stage: heading renumber sweep (huge)", () => {
+    headingNumberingProcessor.process(fullTokens, parserConfig)
+  })
+
+  add("incremental", "stage: render html (huge)", () => {
+    md.renderer.render(fullProcessed, md.options, {})
+  })
+
+  // Theoretical lower bound: reparse only the edited block + global stages
+  add("incremental", "edit@end: block-cached lower bound (huge)", () => {
+    md.parse(lastBlock, {})
+    const s = syntaxStripper.process(editedHuge, parserConfig)
+    lineBreakNormalizer.process(s, parserConfig)
+    headingNumberingProcessor.process(fullTokens, parserConfig)
+  })
+
+  // Actual block-cached parse, warm cache, edit at end
+  {
+    const cachedParser = pinnedParser()
+    cachedParser.parse(docHuge)
+    add("incremental", "edit@end: block-cached warm (huge 200p)", () => {
+      cachedParser.parse(editedHuge)
+    })
+  }
+
+  // Actual block-cached parse, warm cache, edit mid-document
+  {
+    const midCachedParser = pinnedParser()
+    midCachedParser.parse(docHuge)
+    const blocks = docHuge.split("\n\n")
+    blocks[50] = (blocks[50] ?? "") + "。"
+    const editedMid = blocks.join("\n\n")
+    add("incremental", "edit@middle: block-cached warm (huge 200p)", () => {
+      midCachedParser.parse(editedMid)
+    })
+  }
+
+  // Small doc — cache is bypassed internally below 20 blocks
+  const editedSmall = docSmall + "。"
+  {
+    const incSmallParser = pinnedParser()
+    add("incremental", "edit@end: cached parse (small 20p)", () => {
+      incSmallParser.parse(editedSmall)
+    })
+  }
+  {
+    const smallCachedParser = pinnedParser()
+    smallCachedParser.parse(docSmall)
+    add("incremental", "edit@end: block-cached warm (small 20p)", () => {
+      smallCachedParser.parse(editedSmall)
+    })
+  }
+}
 
 // ---------------------------------------------------------------------------
 // Run + report

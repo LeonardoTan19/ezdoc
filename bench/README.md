@@ -49,6 +49,27 @@ history entry is attributable to a code state.
 - `open document` — validate + compile + parse, the real document-open path.
 - `render 200 page numbers` — per-page template evaluation across a long doc.
 
+### incremental
+Per-keystroke parse cost with block-level caching. Simulates appending one
+character at the end of a doc.
+
+- `edit@end: true full reparse (huge 200p)` — full pipeline without caching
+  (baseline).
+- `edit@end: cached parse (huge 200p)` — `MarkdownParser.parse()` with built-in
+  `BlockCache`.
+- `edit@end: block-cached warm (huge 200p)` — pre-warmed cache, steady state.
+- `edit@middle: block-cached warm (huge 200p)` — same but editing mid-document.
+- `stage: preprocess / md.parse tokenize / heading renumber sweep / render html`
+  — pipeline stages of the true full reparse, broken out individually.
+- `edit@end: block-cached lower bound` — reparse only the edited block +
+  unavoidable global stages (theoretical floor for any block-caching scheme).
+- `edit@end: cached parse (small 20p)` and `block-cached warm (small 20p)` —
+  small doc; cache is bypassed internally below 20 blocks.
+
+**Caveat:** these run in bun/node and measure only the **engine parse** stage.
+Pagination (DOM-measurement in `use-paginator.ts`) and React render are not
+measurable without a browser layout engine.
+
 ## History
 
 `history.jsonl` has one JSON object per run:

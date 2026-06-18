@@ -1,4 +1,5 @@
 import MarkdownIt from 'markdown-it'
+import type Token from 'markdown-it/lib/token.mjs'
 import type { ParserConfig } from '../schema'
 import type { ParseResult, ParserPipeline } from './types'
 import { syntaxStripper } from './processors/preprocess/syntax-stripper'
@@ -7,6 +8,7 @@ import { localStyleContainerPlugin } from './processors/md-plugins/local-style-c
 import { textFontScopePlugin } from './processors/md-plugins/text-font-scope'
 import { fastLinkifyPlugin } from './processors/md-plugins/fast-linkify'
 import { headingNumberingProcessor } from './processors/token/heading-numbering'
+import { BlockCache } from './block-cache'
 
 export type MarkdownOptions = ParserConfig
 
@@ -50,6 +52,7 @@ export class MarkdownParser {
   private md: MarkdownIt
   private options: MarkdownOptions
   private pipeline: ParserPipeline
+  private blockCache = new BlockCache()
 
   constructor(pipeline: ParserPipeline = DEFAULT_PIPELINE, options: Partial<MarkdownOptions> = {}) {
     this.pipeline = pipeline
@@ -68,20 +71,44 @@ export class MarkdownParser {
     }
 
     try {
+      // 1. Preprocessors — always full-text (unavoidable O(n) text scan)
       const preprocessed = this.pipeline.preprocessors.reduce(
         (input, preprocessor) => preprocessor.process(input, this.options),
         markdown,
       )
 
-      const parsedTokens = this.md.parse(preprocessed, {})
-
-      const processedTokens = this.pipeline.tokenProcessors.reduce(
-        (tokens, processor) => processor.process(tokens, this.options),
-        parsedTokens,
+      // 2. Tokenization — block-cached when beneficial, full-doc otherwise
+      let tokens: Token[]
+      const cached = this.blockCache.diffAndMerge(preprocessed, (block, env) =>
+        this.md.parse(block, env),
       )
 
-      const renderedHtml = this.md.renderer.render(processedTokens, this.md.options, {})
+      if (cached !== null) {
+        // Cache-hit path: only changed blocks were re-tokenized
+        tokens = cached
+      } else {
+        // Fallback: full-document parse (small doc, cold cache, or
+        // unsafe container boundaries)
+        tokens = this.md.parse(preprocessed, {})
+        this.blockCache.seed(preprocessed, (block, env) =>
+          this.md.parse(block, env),
+        )
+      }
 
+      // 3. Token processors (heading numbering — always full sweep)
+      const processedTokens = this.pipeline.tokenProcessors.reduce(
+        (tokens, processor) => processor.process(tokens, this.options),
+        tokens,
+      )
+
+      // 4. Render to HTML
+      const renderedHtml = this.md.renderer.render(
+        processedTokens,
+        this.md.options,
+        {},
+      )
+
+      // 5. HTML postprocessors
       const html = this.pipeline.htmlPostprocessors.reduce(
         (input, postprocessor) => postprocessor.process(input, this.options),
         renderedHtml,
@@ -112,6 +139,9 @@ export class MarkdownParser {
     // time, so per-keystroke parses avoid reconstructing the parser.
     if (requiresMarkdownItRebuild(previous, next)) {
       this.md = this.createMarkdownIt(next)
+      // Cached tokens were produced by the old MarkdownIt instance with
+      // potentially different rules/plugins — they are no longer valid.
+      this.blockCache.invalidate()
     }
   }
 
