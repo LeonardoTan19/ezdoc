@@ -15,6 +15,9 @@ dist-ssr
 # Local design docs and plans
 docs/
 
+# Benchmark run history (machine-specific)
+bench/history.jsonl
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

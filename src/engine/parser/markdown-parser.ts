@@ -5,6 +5,7 @@ import { syntaxStripper } from './processors/preprocess/syntax-stripper'
 import { lineBreakNormalizer } from './processors/preprocess/line-break-normalizer'
 import { localStyleContainerPlugin } from './processors/md-plugins/local-style-container'
 import { textFontScopePlugin } from './processors/md-plugins/text-font-scope'
+import { fastLinkifyPlugin } from './processors/md-plugins/fast-linkify'
 import { headingNumberingProcessor } from './processors/token/heading-numbering'
 
 export type MarkdownOptions = ParserConfig
@@ -21,9 +22,28 @@ const defaultOptions: MarkdownOptions = {
 
 export const DEFAULT_PIPELINE: ParserPipeline = {
   preprocessors: [syntaxStripper, lineBreakNormalizer],
-  mdPlugins: [localStyleContainerPlugin, textFontScopePlugin],
+  mdPlugins: [localStyleContainerPlugin, textFontScopePlugin, fastLinkifyPlugin],
   tokenProcessors: [headingNumberingProcessor],
   htmlPostprocessors: [],
+}
+
+function requiresMarkdownItRebuild(previous: MarkdownOptions, next: MarkdownOptions): boolean {
+  if (
+    previous.html !== next.html ||
+    previous.enterStyle !== next.enterStyle ||
+    previous.linkify !== next.linkify ||
+    previous.typographer !== next.typographer
+  ) {
+    return true
+  }
+
+  const prevDisabled = previous.disabledSyntax ?? []
+  const nextDisabled = next.disabledSyntax ?? []
+  if (prevDisabled.length !== nextDisabled.length || prevDisabled.some((item, i) => item !== nextDisabled[i])) {
+    return true
+  }
+
+  return previous.localStyleAliases !== next.localStyleAliases
 }
 
 export class MarkdownParser {
@@ -78,13 +98,21 @@ export class MarkdownParser {
   }
 
   setOptions(options: Partial<MarkdownOptions>): void {
-    this.options = {
+    const previous = this.options
+    const next: MarkdownOptions = {
       ...this.options,
       ...options,
       disabledSyntax: options.disabledSyntax ?? this.options.disabledSyntax,
       localStyleAliases: options.localStyleAliases ?? this.options.localStyleAliases
     }
-    this.md = this.createMarkdownIt(this.options)
+    this.options = next
+
+    // Only construction-affecting options trigger a rebuild; live options
+    // (headingNumbering/headingStyles) are read by token processors at parse
+    // time, so per-keystroke parses avoid reconstructing the parser.
+    if (requiresMarkdownItRebuild(previous, next)) {
+      this.md = this.createMarkdownIt(next)
+    }
   }
 
   private createMarkdownIt(options: MarkdownOptions): MarkdownIt {

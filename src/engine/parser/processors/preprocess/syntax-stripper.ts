@@ -19,17 +19,23 @@ export const syntaxStripper: Preprocessor = {
       })
     }
 
+    const stripBlockquote = disabledSyntax.includes('blockquote')
+    const stripUnorderedList = disabledSyntax.includes('unorderedList')
+    if (!stripBlockquote && !stripUnorderedList) {
+      return normalized
+    }
+
     const lines = normalized.split('\n')
     const outputLines: string[] = []
 
     for (const line of lines) {
       let currentLine = line
 
-      if (disabledSyntax.includes('blockquote')) {
+      if (stripBlockquote) {
         currentLine = currentLine.replace(/^\s*>\s?/, '')
       }
 
-      if (disabledSyntax.includes('unorderedList')) {
+      if (stripUnorderedList) {
         currentLine = currentLine.replace(/^\s*[-*+]\s+/, '')
       }
 

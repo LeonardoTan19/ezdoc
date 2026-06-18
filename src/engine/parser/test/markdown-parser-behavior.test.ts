@@ -406,4 +406,34 @@ describe('MarkdownParser behavior', () => {
       'MARKDOWN_PARSE_FAILED: pipeline explosion',
     )
   })
+
+  describe('fast-linkify guard', () => {
+    const parser = new MarkdownParser(undefined, {
+      linkify: true,
+      headingNumbering: false,
+      disabledSyntax: [],
+    })
+
+    it('still linkifies real URLs, emails and bare hosts', () => {
+      const html = parser.parse(
+        '详见 https://example.com/path 或邮箱 a@b.com 以及 example.org。',
+      ).html
+      expect(html).toContain('<a href="https://example.com/path"')
+      expect(html).toContain('<a href="mailto:a@b.com"')
+      expect(html).toContain('<a href="http://example.org"')
+    })
+
+    it('produces no links for trigger-free CJK prose (the skipped fast path)', () => {
+      const html = parser.parse(
+        '各部门要充分认识本次工作的重要意义，确保取得实效。',
+      ).html
+      expect(html).not.toContain('<a ')
+    })
+
+    it('matches non-guarded output when a trigger char is present but not a link', () => {
+      // Contains "." and ":" yet has no linkifiable target — must stay link-free.
+      const html = parser.parse('版本 v2.1，增长 12.5%：参见说明。').html
+      expect(html).not.toContain('<a ')
+    })
+  })
 })

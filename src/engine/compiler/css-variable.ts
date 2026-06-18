@@ -1,5 +1,7 @@
 const CAMEL_CASE_SEGMENT_PATTERN = /([a-z0-9])([A-Z])/g
 
+const cssCustomPropertyCache = new Map<string, string>()
+
 function normalizePathSegment(segment: string): string {
   return segment
     .replace(CAMEL_CASE_SEGMENT_PATTERN, '$1-$2')
@@ -8,6 +10,11 @@ function normalizePathSegment(segment: string): string {
 }
 
 export function toCssCustomProperty(path: string): string {
+  const cached = cssCustomPropertyCache.get(path)
+  if (cached !== undefined) {
+    return cached
+  }
+
   const normalizedPath = path
     .trim()
     .split('.')
@@ -15,5 +22,7 @@ export function toCssCustomProperty(path: string): string {
     .filter((segment) => segment.length > 0)
     .join('-')
 
-  return `--${normalizedPath}`
+  const result = `--${normalizedPath}`
+  cssCustomPropertyCache.set(path, result)
+  return result
 }

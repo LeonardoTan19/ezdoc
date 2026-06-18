@@ -15,6 +15,18 @@ type NumberingPlaceholder =
 
 const HEADING_INDEX_DISABLED_VALUE = '0lines'
 
+const PLACEHOLDER_FORMATTERS: Record<NumberingPlaceholder, (index: number) => string> = {
+  '{number}': (index) => formatByStyle(index, 'arabic'),
+  '{arabicIndex}': (index) => formatByStyle(index, 'arabic'),
+  '{zhHansIndex}': (index) => formatByStyle(index, 'zhHans'),
+  '{zhHantIndex}': (index) => formatByStyle(index, 'zhHant'),
+  '{romanIndex}': (index) => formatByStyle(index, 'roman'),
+  '{romanUpperIndex}': (index) => formatByStyle(index, 'roman'),
+  '{romanLowerIndex}': (index) => formatByStyle(index, 'roman').toLowerCase()
+}
+
+const NUMBERING_PLACEHOLDERS = Object.keys(PLACEHOLDER_FORMATTERS) as NumberingPlaceholder[]
+
 function getDefaultHeadingStyle(level: HeadingLevel): string {
   if (level === 'h2') {
     return '{zhHansIndex}'
@@ -34,25 +46,14 @@ function formatHeadingPrefix(currentIndex: number, style: string | undefined): s
     return ''
   }
 
-  const placeholderValues: Record<NumberingPlaceholder, string> = {
-    '{number}': formatByStyle(currentIndex, 'arabic'),
-    '{arabicIndex}': formatByStyle(currentIndex, 'arabic'),
-    '{zhHansIndex}': formatByStyle(currentIndex, 'zhHans'),
-    '{zhHantIndex}': formatByStyle(currentIndex, 'zhHant'),
-    '{romanIndex}': formatByStyle(currentIndex, 'roman'),
-    '{romanUpperIndex}': formatByStyle(currentIndex, 'roman'),
-    '{romanLowerIndex}': formatByStyle(currentIndex, 'roman').toLowerCase()
-  }
-
   let formatted = template
   let hasPlaceholder = false
-  const placeholders = Object.keys(placeholderValues) as NumberingPlaceholder[]
-  placeholders.forEach((placeholder) => {
+  for (const placeholder of NUMBERING_PLACEHOLDERS) {
     if (formatted.includes(placeholder)) {
       hasPlaceholder = true
-      formatted = formatted.split(placeholder).join(placeholderValues[placeholder])
+      formatted = formatted.split(placeholder).join(PLACEHOLDER_FORMATTERS[placeholder](currentIndex))
     }
-  })
+  }
 
   if (hasPlaceholder) {
     return formatted
