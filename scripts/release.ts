@@ -17,9 +17,11 @@
 //      just below `## [Unreleased]`, refreshing the compare links at the foot.
 //
 // Step 2 — commit (run after polishing CHANGELOG.md):
-//   Reads the current version from package.json, then git add the five
-//   versioned files, commit with "chore(release): prepare v<x.y.z>", and
-//   create a v<x.y.z> tag. Does NOT push — you push manually afterwards.
+//   Runs a quality gate first (`bun run build` + full vitest suite); aborts
+//   without committing or tagging if either fails. Then reads the current
+//   version from package.json, git add the five versioned files, commit with
+//   "chore(release): prepare v<x.y.z>", and create a v<x.y.z> tag. Does NOT
+//   push — you push manually afterwards.
 //
 // The generated Added/Changed/Fixed bullets are scaffolding — skim and polish
 // them before releasing. The raw `### Commits` list underneath is the source
@@ -58,6 +60,25 @@ function fail(message: string): never {
 
 function git(command: string): string {
   return execSync(command, { cwd: root, encoding: "utf8" }).trim()
+}
+
+// Run a command, streaming its output; abort the release if it exits non-zero.
+function run(command: string, label: string): void {
+  try {
+    execSync(command, { cwd: root, stdio: "inherit" })
+  } catch {
+    fail(`${label} failed (\`${command}\`) — aborting before tag`)
+  }
+}
+
+// Pre-tag gate: `bun run build` is the `tsc -b && vite build` CI runs, so a
+// green gate means a green release build (`typecheck`'s `tsc --noEmit` misses
+// `tsc -b` build-mode errors).
+function runReleaseGate(): void {
+  console.log("release commit: running quality gate (build + tests)...")
+  run("bun run build", "build")
+  run("bunx vitest run", "tests")
+  console.log("  gate passed\n")
 }
 
 function readCurrentVersion(): string {
@@ -280,6 +301,9 @@ if (!command || command === "--help" || command === "-h") {
 if (command === "commit") {
   const version = readCurrentVersion()
   const tag = `v${version}`
+
+  // Gate first: never tag a release that can't build or pass tests.
+  runReleaseGate()
 
   const status = git("git status --porcelain")
   if (status) {

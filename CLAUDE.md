@@ -17,7 +17,7 @@ bun run typecheck        # tsc --noEmit only
 bun run tauri build      # produce desktop bundles
 
 bun run release <major|minor|patch|x.y.z>   # bump versions + CHANGELOG scaffold (step 1)
-bun run release commit                      # git add, commit, tag (step 2)
+bun run release commit                      # quality gate (build + tests), then git add, commit, tag (step 2)
 
 bun run lint             # eslint .
 bun run format           # prettier --write "**/*.{ts,tsx}"

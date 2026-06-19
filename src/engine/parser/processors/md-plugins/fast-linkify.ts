@@ -1,18 +1,6 @@
 import type { ParserConfig } from '../../../schema'
 import type { MdPluginWithOptions } from '../../types'
 
-// markdown-it's `linkify` core rule runs linkify-it's `pretest` regex against
-// every inline token's content. That regex is expensive over long runs of CJK
-// text, and for typical government documents (paragraphs of Chinese prose with
-// no URLs) it never matches — yet still dominates parse time (~38% on an 80-
-// paragraph doc).
-//
-// linkify can only ever produce a link when the text contains one of `. : / @`
-// (schema separator, protocol slashes, fuzzy-host dot, or email at-sign). A
-// single `indexOf` scan per token is a cheap, sound necessary condition: if no
-// inline token contains any trigger character, the original rule cannot match,
-// so we skip it entirely. When a trigger is present we delegate to the original
-// rule unchanged, so output is identical in every case.
 const LINKIFY_TRIGGERS = ['.', ':', '/', '@']
 
 function hasLinkifyTrigger(content: string): boolean {
@@ -25,7 +13,17 @@ function hasLinkifyTrigger(content: string): boolean {
 }
 
 export const fastLinkifyPlugin: MdPluginWithOptions<ParserConfig> = (md) => {
-  const linkifyRule = md.core.ruler.__rules__.find((rule) => rule.name === 'linkify')
+  type CoreRuleFn = Parameters<typeof md.core.ruler.at>[1]
+  interface CoreRule {
+    name: string
+    fn: CoreRuleFn
+  }
+  interface RulerInternals {
+    __rules__: CoreRule[]
+  }
+
+  const rules = (md.core.ruler as unknown as RulerInternals).__rules__
+  const linkifyRule = rules.find((rule) => rule.name === 'linkify')
   if (!linkifyRule || typeof linkifyRule.fn !== 'function') {
     return
   }
@@ -51,6 +49,6 @@ export const fastLinkifyPlugin: MdPluginWithOptions<ParserConfig> = (md) => {
       return
     }
 
-    return originalLinkify(state, 0)
+    return originalLinkify(state)
   })
 }
