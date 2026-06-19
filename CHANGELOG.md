@@ -4,6 +4,26 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-06-19
+
+### Performance
+
+- Faster incremental editing: the parser now caches block-level tokens and reuses them across edits, and skips the linkify scan entirely on documents with no links.
+
+### Fixed
+
+- Page splitting now keeps partial trailing text that follows inline elements, so content no longer drops at page boundaries.
+- Release workflow: the summary step is pinned to bash so it runs identically on all platforms (previously failed on Windows runners under PowerShell), and the linkify optimization now builds cleanly under `tsc -b`.
+
+### Commits
+
+- 680693c fix(parser): type fast-linkify access to markdown-it private __rules__
+- 374549b fix(ci): run release summary step with bash on all platforms
+- 800c8f7 perf(parser): add block-level token cache for incremental markdown parsing
+- 01e0131 perf(parser): skip linkify scan on link-free documents
+- bb49fe1 test: audit and improve test coverage across all modules
+- 522e6fb fix(paginator): include partial trailing text after inline elements during page split
+
 ## [0.1.0] - 2026-06-10
 
 First release of ezdoc — a Tauri + React Markdown-to-styled-document editor.
@@ -51,5 +71,6 @@ First release of ezdoc — a Tauri + React Markdown-to-styled-document editor.
 - 0da19ff feat(engine): migrate engine layer from gov-draft with green test baseline
 - 6a6449c feat: initial commit
 
-[Unreleased]: https://github.com/LeonardoTan19/ezdoc/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/LeonardoTan19/ezdoc/compare/v0.1.1...HEAD
+[0.1.1]: https://github.com/LeonardoTan19/ezdoc/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/LeonardoTan19/ezdoc/releases/tag/v0.1.0
