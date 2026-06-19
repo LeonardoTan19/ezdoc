@@ -75,7 +75,7 @@ export function A4Paper({ html }: A4PaperProps) {
     <>
       <div
         ref={stageRef}
-        className="paper-stage h-full overflow-auto bg-neutral-200 p-6 dark:bg-neutral-900"
+        className="paper-stage h-full overflow-auto bg-muted p-6"
         style={{ '--preview-scale': scale } as React.CSSProperties}
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
@@ -90,7 +90,7 @@ export function A4Paper({ html }: A4PaperProps) {
               <article
                 key={idx}
                 data-page-index={idx + 1}
-                className="paper-sheet preview-content relative w-[210mm] min-h-[297mm] bg-white shadow-lg dark:shadow-neutral-950"
+                className="paper-sheet preview-content relative w-[210mm] min-h-[297mm] bg-background shadow-lg"
               >
                 <div dangerouslySetInnerHTML={{ __html: pageHtml }} />
                 {paginationEnabled && meta?.pagination && (
