@@ -80,7 +80,7 @@ const CodeMirrorReact = forwardRef<CodeMirrorHandle, CodeMirrorReactProps>(
     return (
       <div
         ref={containerRef}
-        className="codemirror-wrapper flex-1 overflow-hidden"
+        className="codemirror-wrapper flex-1 min-h-0"
       />
     )
   },

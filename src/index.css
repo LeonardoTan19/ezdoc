@@ -261,10 +261,36 @@ body {
     background: var(--muted-foreground);
   }
 
+  .codemirror-wrapper > .cm-editor {
+    height: 100%;
+  }
+
+  .cm-scroller {
+    overflow-y: auto !important;
+    scrollbar-width: thin;
+    scrollbar-color: var(--muted-foreground) transparent;
+  }
+
+  .cm-scroller::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  .cm-scroller::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .cm-scroller::-webkit-scrollbar-thumb {
+    background: var(--muted-foreground);
+    border-radius: var(--radius-lg);
+  }
+  .cm-scroller::-webkit-scrollbar-thumb:hover {
+    background: var(--foreground);
+  }
+
   /* CodeMirror editor and gutter — follow theme via design tokens. */
   .cm-editor {
     background: var(--background) !important;
     color: var(--foreground) !important;
+    font-size: 125%;
   }
   .cm-gutters {
     background: var(--background) !important;
