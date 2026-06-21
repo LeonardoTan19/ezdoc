@@ -1,7 +1,7 @@
 import { useEffect, useRef, useImperativeHandle, forwardRef } from 'react'
 import { EditorView } from '@codemirror/view'
 import { undo, redo, undoDepth, redoDepth } from '@codemirror/commands'
-import { createEditorState } from './codemirror/createEditorState'
+import { createEditorState } from './core/build-extensions'
 
 interface CodeMirrorReactProps {
   value: string
