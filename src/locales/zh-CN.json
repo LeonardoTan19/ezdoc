@@ -41,7 +41,21 @@
 		"statsAria": "文档统计",
 		"wordCount": "字数 {{count}}",
 		"charCount": "字符 {{count}}",
-		"importFailed": "文件导入失败"
+		"importFailed": "文件导入失败",
+		"formatBold": "加粗",
+		"formatBoldTitle": "加粗",
+		"formatH1": "标题 1",
+		"formatH1Title": "一级标题",
+		"formatH2": "标题 2",
+		"formatH2Title": "二级标题",
+		"formatH3": "标题 3",
+		"formatH3Title": "三级标题",
+		"formatUl": "无序列表",
+		"formatUlTitle": "无序列表",
+		"formatOl": "有序列表",
+		"formatOlTitle": "有序列表",
+		"toggleLineWrap": "切换自动换行",
+		"formatGroupAria": "格式化工具"
 	},
 	"exportDialog": {
 		"aria": "导出文档",

@@ -41,7 +41,21 @@
 		"statsAria": "Document stats",
 		"wordCount": "Words {{count}}",
 		"charCount": "Characters {{count}}",
-		"importFailed": "Import failed"
+		"importFailed": "Import failed",
+		"formatBold": "Bold",
+		"formatBoldTitle": "Bold",
+		"formatH1": "Heading 1",
+		"formatH1Title": "Heading 1",
+		"formatH2": "Heading 2",
+		"formatH2Title": "Heading 2",
+		"formatH3": "Heading 3",
+		"formatH3Title": "Heading 3",
+		"formatUl": "Bullet List",
+		"formatUlTitle": "Bullet List",
+		"formatOl": "Numbered List",
+		"formatOlTitle": "Numbered List",
+		"toggleLineWrap": "Toggle word wrap",
+		"formatGroupAria": "Formatting tools"
 	},
 	"exportDialog": {
 		"aria": "Export Document",

@@ -301,6 +301,58 @@ body {
     background: var(--accent) !important;
   }
 
+  /* ---- active line highlight ---- */
+  .cm-activeLine {
+    background: var(--accent) !important;
+  }
+
+  /* ---- search panel ---- */
+  .cm-panels {
+    background: var(--background);
+    color: var(--foreground);
+    border-bottom: 1px solid var(--border);
+  }
+  .cm-panels input {
+    background: var(--background);
+    color: var(--foreground);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 2px 6px;
+    font: inherit;
+  }
+  .cm-panels button {
+    background: var(--secondary);
+    color: var(--secondary-foreground);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 2px 8px;
+    cursor: pointer;
+    font: inherit;
+  }
+  .cm-panels button:hover {
+    background: var(--accent);
+  }
+  .cm-panels button[name="close"] {
+    background: transparent;
+    border: none;
+    padding: 0 4px;
+    font-size: 1.2em;
+  }
+  .cm-searchMatch {
+    background: var(--primary);
+    opacity: 0.3;
+  }
+  .cm-searchMatch-selected {
+    background: var(--primary);
+    opacity: 0.5;
+  }
+
+  /* ---- bracket matching ---- */
+  .cm-matchingBracket {
+    background: var(--accent);
+    outline: 1px solid var(--border);
+  }
+
   /* Desktop UIs often feel cleaner with accidental text selection disabled by default. */
   body {
     @apply select-none;

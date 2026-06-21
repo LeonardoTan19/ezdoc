@@ -1,7 +1,15 @@
-import { useEffect, useRef, useImperativeHandle, forwardRef } from 'react'
-import { EditorView } from '@codemirror/view'
-import { undo, redo, undoDepth, redoDepth } from '@codemirror/commands'
-import { createEditorState } from './core/build-extensions'
+import { useEffect, useRef, useImperativeHandle, forwardRef } from "react"
+import { EditorView } from "@codemirror/view"
+import { undo, redo, undoDepth, redoDepth } from "@codemirror/commands"
+import { createEditorState } from "./core/build-extensions"
+import {
+  lineWrapCompartment,
+  isLineWrapEnabled,
+} from "./core/features/line-wrap"
+import {
+  executeFormat,
+  type FormatAction,
+} from "./core/features/format-commands"
 
 interface CodeMirrorReactProps {
   value: string
@@ -13,6 +21,9 @@ export interface CodeMirrorHandle {
   redo: () => boolean
   canUndo: () => boolean
   canRedo: () => boolean
+  format: (action: FormatAction) => boolean
+  toggleLineWrap: () => void
+  getLineWrap: () => boolean
 }
 
 const CodeMirrorReact = forwardRef<CodeMirrorHandle, CodeMirrorReactProps>(
@@ -21,7 +32,6 @@ const CodeMirrorReact = forwardRef<CodeMirrorHandle, CodeMirrorReactProps>(
     const viewRef = useRef<EditorView | null>(null)
     const onChangeRef = useRef(onChange)
 
-    // Keep onChange ref in sync to avoid stale closures
     useEffect(() => {
       onChangeRef.current = onChange
     }, [onChange])
@@ -43,6 +53,24 @@ const CodeMirrorReact = forwardRef<CodeMirrorHandle, CodeMirrorReactProps>(
         if (!viewRef.current) return false
         return redoDepth(viewRef.current.state) > 0
       },
+      format: (action: FormatAction) => {
+        if (!viewRef.current) return false
+        return executeFormat(viewRef.current, action)
+      },
+      toggleLineWrap: () => {
+        const view = viewRef.current
+        if (!view) return
+        const currentlyWrapped = isLineWrapEnabled(view.state)
+        view.dispatch({
+          effects: lineWrapCompartment.reconfigure(
+            currentlyWrapped ? [] : EditorView.lineWrapping
+          ),
+        })
+      },
+      getLineWrap: () => {
+        if (!viewRef.current) return false
+        return isLineWrapEnabled(viewRef.current.state)
+      },
     }))
 
     useEffect(() => {
@@ -63,27 +91,27 @@ const CodeMirrorReact = forwardRef<CodeMirrorHandle, CodeMirrorReactProps>(
         viewRef.current = null
       }
       // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []) // mount only
+    }, [])
 
-    // Sync external value changes into editor
     useEffect(() => {
       const view = viewRef.current
       if (!view) return
       const current = view.state.doc.toString()
       if (current !== value) {
         view.dispatch({
-          changes: { from: 0, to: current.length, insert: value },
+          changes: {
+            from: 0,
+            to: current.length,
+            insert: value,
+          },
         })
       }
     }, [value])
 
     return (
-      <div
-        ref={containerRef}
-        className="codemirror-wrapper flex-1 min-h-0"
-      />
+      <div ref={containerRef} className="codemirror-wrapper min-h-0 flex-1" />
     )
-  },
+  }
 )
 
 export default CodeMirrorReact
