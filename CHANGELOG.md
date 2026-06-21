@@ -4,6 +4,32 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.1.2] - 2026-06-21
+
+### Added
+
+- Rich editing in the CodeMirror pane: syntax highlighting, in-editor search, auto-pairing of brackets/quotes, active-line highlight, and a formatting toolbar (bold, headings, lists).
+- A bottom status bar showing live word and character counts.
+
+### Changed
+
+- The toolbar is now responsive — it wraps instead of clipping when space is tight — and import/export are grouped under a single File dropdown menu. Word/character counts moved out of the toolbar into the new status bar.
+- Restructured the editor's `codemirror/` directory into a `core/` layout and added `@codemirror/search`.
+- The Tauri window now enforces a minimum size (1100×700) so the toolbar always renders fully.
+
+### Fixed
+
+- CodeMirror vertical scrolling now works with a visible scrollbar.
+- Components comply with the `index.css` design tokens.
+
+### Commits
+
+- 3315369 feat(editor): responsive toolbar, file dropdown menu, and status bar
+- dd743e7 feat(editor): add syntax highlight, search, auto-pair, active-line, format toolbar
+- 5c8e463 refactor(editor): restructure codemirror/ into core/ and add @codemirror/search
+- f27383b fix(editor): add visible scrollbar and fix CodeMirror vertical scrolling
+- 435617f fix(theme): enforce index.css design token compliance across components
+
 ## [0.1.1] - 2026-06-19
 
 ### Performance
@@ -71,6 +97,7 @@ First release of ezdoc — a Tauri + React Markdown-to-styled-document editor.
 - 0da19ff feat(engine): migrate engine layer from gov-draft with green test baseline
 - 6a6449c feat: initial commit
 
-[Unreleased]: https://github.com/LeonardoTan19/ezdoc/compare/v0.1.1...HEAD
+[Unreleased]: https://github.com/LeonardoTan19/ezdoc/compare/v0.1.2...HEAD
+[0.1.2]: https://github.com/LeonardoTan19/ezdoc/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/LeonardoTan19/ezdoc/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/LeonardoTan19/ezdoc/releases/tag/v0.1.0
