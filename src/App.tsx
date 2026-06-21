@@ -9,6 +9,7 @@ import CodeMirrorReact from '@/components/editor/CodeMirrorReact'
 import type { CodeMirrorHandle } from '@/components/editor/CodeMirrorReact'
 import { A4Paper } from '@/components/preview/A4Paper'
 import { Toolbar } from '@/components/editor/Toolbar'
+import { StatusBar } from '@/components/editor/StatusBar'
 
 export function App() {
   const { t } = useTranslation()
@@ -60,6 +61,7 @@ export function App() {
             value={content}
             onChange={setContent}
           />
+          <StatusBar />
         </div>
 
         {/* Resizer */}

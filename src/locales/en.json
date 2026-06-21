@@ -33,6 +33,7 @@
 		"actionsAria": "Editing and file tools",
 		"undoTitle": "Undo (Ctrl+Z)",
 		"redoTitle": "Redo (Ctrl+Y)",
+		"file": "File",
 		"import": "Import",
 		"export": "Export",
 		"exportMarkdown": "Export Markdown",

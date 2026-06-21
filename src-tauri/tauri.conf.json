@@ -17,6 +17,8 @@
         "title": "ezdoc",
         "width": 1400,
         "height": 918,
+        "minWidth": 1100,
+        "minHeight": 700,
         "center": true,
         "visible": false
       }

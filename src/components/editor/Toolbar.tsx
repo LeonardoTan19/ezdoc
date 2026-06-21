@@ -1,6 +1,14 @@
 import { useTranslation } from "react-i18next"
 import { Button } from "@/components/ui/button"
-import { useDocStore } from "@/stores/doc-store"
+import { HugeiconsIcon } from "@hugeicons/react"
+import { File01Icon } from "@hugeicons/core-free-icons"
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu"
 import { useFileSystem } from "@/hooks/use-file-system"
 import type { CodeMirrorHandle } from "./CodeMirrorReact"
 import { FormatButtons } from "./toolbar/FormatButtons"
@@ -12,8 +20,6 @@ interface ToolbarProps {
 
 export function Toolbar({ editorRef }: ToolbarProps) {
   const { t } = useTranslation()
-  const wordCount = useDocStore((state) => state.getWordCount())
-  const charCount = useDocStore((state) => state.getCharCount())
   const { importFile, exportMarkdown, exportHtml } = useFileSystem()
 
   const handleImport = async () => {
@@ -34,7 +40,7 @@ export function Toolbar({ editorRef }: ToolbarProps) {
 
   return (
     <div
-      className="toolbar flex items-center gap-2 border-b px-3 py-1.5"
+      className="toolbar flex flex-wrap items-center gap-x-2 gap-y-1 border-b px-3 py-1.5"
       role="toolbar"
       aria-label={t("toolbar.aria")}
     >
@@ -66,25 +72,35 @@ export function Toolbar({ editorRef }: ToolbarProps) {
       <span className="mx-1 h-4 w-px bg-border" />
 
       {/* File operations */}
-      <Button variant="ghost" size="sm" onClick={handleImport}>
-        {t("toolbar.import")}
-      </Button>
-      <Button variant="ghost" size="sm" onClick={() => exportMarkdown()}>
-        {t("toolbar.exportMarkdown")}
-      </Button>
-      <Button variant="ghost" size="sm" onClick={() => exportHtml()}>
-        {t("toolbar.exportHtml")}
-      </Button>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button
+            variant="ghost"
+            size="sm"
+            title={t("toolbar.file")}
+            aria-label={t("toolbar.file")}
+          >
+            <HugeiconsIcon icon={File01Icon} />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="start">
+          <DropdownMenuItem onSelect={handleImport}>
+            {t("toolbar.import")}
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem onSelect={() => exportMarkdown()}>
+            {t("toolbar.exportMarkdown")}
+          </DropdownMenuItem>
+          <DropdownMenuItem onSelect={() => exportHtml()}>
+            {t("toolbar.exportHtml")}
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
 
-      {/* Right side: stats + line-wrap toggle */}
-      <div className="ml-auto flex items-center gap-2">
-        <LineWrapToggle editorRef={editorRef} />
-        <span className="text-xs text-muted-foreground">
-          {t("toolbar.wordCount", { count: wordCount })}
-          {" · "}
-          {t("toolbar.charCount", { count: charCount })}
-        </span>
-      </div>
+      <span className="mx-1 h-4 w-px bg-border" />
+
+      {/* Line-wrap toggle */}
+      <LineWrapToggle editorRef={editorRef} />
     </div>
   )
 }

@@ -33,6 +33,7 @@
 		"actionsAria": "编辑与文件工具",
 		"undoTitle": "撤销 (Ctrl+Z)",
 		"redoTitle": "恢复 (Ctrl+Y)",
+		"file": "文件",
 		"import": "导入",
 		"export": "导出",
 		"exportMarkdown": "导出 Markdown",
